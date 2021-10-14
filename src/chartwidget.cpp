@@ -9,8 +9,14 @@
 namespace chart_qt {
 
 ChartWidget::ChartWidget(QWidget *parent)
-           : QOpenGLWidget(parent)
+//            : QOpenGLWindow()
+            : QOpenGLWidget(parent)
 {
+    QSurfaceFormat fmt;
+    fmt.setMajorVersion(4);
+    fmt.setMinorVersion(1);
+    fmt.setProfile(QSurfaceFormat::CoreProfile);
+//     setFormat(fmt);
 }
 
 ChartWidget::~ChartWidget()

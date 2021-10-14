@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.21)
 project(chart-qt)
 
+if(WASM)
+    include(cmake/wasm.cmake)
+endif()
+
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/3rdparty/sanitizers-cmake/cmake" ${CMAKE_MODULE_PATH})
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
@@ -12,11 +16,12 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInf
 endif()
 
 find_package(Sanitizers)
-find_package(Qt5 COMPONENTS Widgets)
+find_package(Qt6 COMPONENTS Core Widgets OpenGL OpenGLWidgets Charts)
+
+find_package(Qt6QmlImportScanner REQUIRED)
 
 set(SOURCES src/main.cpp
             src/window.cpp
-            src/chartwidget.cpp
             src/plot.cpp
             src/dataset.cpp
             src/sindataset.cpp
@@ -27,4 +32,13 @@ set_property(TARGET chart-qt PROPERTY CXX_STANDARD 20)
 set_property(TARGET chart-qt PROPERTY AUTOMOC ON)
 add_sanitizers(chart-qt)
 
-target_link_libraries(chart-qt Qt5::Widgets)
+if(WASM)
+    target_compile_definitions(chart-qt PRIVATE WASM)
+endif()
+
+target_link_libraries(chart-qt PRIVATE Qt6::Widgets Qt6::OpenGL Qt6::Charts)
+qt_import_qml_plugins(chart-qt)
+
+if(WASM)
+    link_qt_static(chart-qt)
+endif()

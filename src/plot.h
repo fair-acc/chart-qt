@@ -3,6 +3,8 @@
 
 #include <QObject>
 
+class QAbstractSeries;
+
 namespace chart_qt {
 
 class DataSet;
@@ -16,6 +18,8 @@ public:
     virtual void updateData(int index, int count) = 0;
     virtual void render() = 0;
     virtual void handleResize(int width, int height);
+
+    virtual QAbstractSeries *series() const = 0;
 
     void setDataSet(DataSet *dataset);
     inline DataSet *dataSet() const { return m_dataset; }

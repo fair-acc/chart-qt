@@ -1,6 +1,8 @@
 #ifndef DATASET_H
 #define DATASET_H
 
+#include <span>
+
 #include <QObject>
 
 namespace chart_qt {
@@ -24,7 +26,7 @@ public:
      * @param index data point index
      * @return the x value
      */
-    virtual double get(int dimIndex, int index) const = 0;
+    virtual float get(int dimIndex, int index) const = 0;
 
 //     /**
 //      * Return the axis description of the i-th axis.
@@ -103,7 +105,7 @@ public:
 //      * @param dimIndex the dimension index (ie. '0' equals 'X', '1' equals 'Y')
 //      * @return the x value array
 //      */
-//     std::span<double> getValues(int dimIndex);
+    virtual std::span<float> getValues(int dimIndex) = 0;
 //
 //     /**
 //      * @return Read-Write Lock to guard the DataSet

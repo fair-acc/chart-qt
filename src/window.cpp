@@ -1,6 +1,9 @@
 #include "window.h"
 
-#include "chartwidget.h"
+#include <QMenuBar>
+#include <QChartView>
+#include <QValueAxis>
+
 #include "xyplot.h"
 #include "sindataset.h"
 
@@ -8,15 +11,32 @@ namespace chart_qt {
 
 Window::Window()
 {
-    auto chart = new ChartWidget(this);
+    menuBar()->addMenu("File");
+
+    auto chart = new QChartView(this);
+//     setCentralWidget(QWidget::createWindowContainer(chart));
     setCentralWidget(chart);
+
+    QValueAxis *yAxis = new QValueAxis(this);
+    yAxis->setMin(-2);
+    yAxis->setMax(2);
+    chart->chart()->addAxis(yAxis, Qt::AlignLeft);
+
+    QValueAxis *xAxis = new QValueAxis(this);
+    xAxis->setMin(0);
+    xAxis->setMax(70);
+    chart->chart()->addAxis(xAxis, Qt::AlignBottom);
+
 
     auto dataset = new SinDataSet;
 
-
-    auto plot = std::make_unique<XYPlot>();
+    auto plot = new XYPlot;
     plot->setDataSet(dataset);
-    chart->addPlot(std::move(plot));
+    auto series = plot->series();
+    chart->chart()->addSeries(series);
+    series->attachAxis(xAxis);
+    series->attachAxis(yAxis);
+    // chart->addPlot(std::move(plot));
 }
 
 }
