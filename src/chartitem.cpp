@@ -14,10 +14,10 @@ ChartItem::ChartItem(QQuickItem *parent)
 {
     setFlag(QQuickItem::ItemHasContents);
 
-    auto dataset = new SinDataSet;
-    auto plot = new XYPlot;
-    plot->setDataSet(dataset);
-    addPlot(plot);
+    // auto dataset = new SinDataSet;
+    // auto plot = new XYPlot;
+    // plot->setDataSet(dataset);
+    // addPlot(plot);
 }
 
 ChartItem::~ChartItem()

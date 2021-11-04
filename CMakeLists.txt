@@ -16,12 +16,11 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInf
 endif()
 
 find_package(Sanitizers)
-find_package(Qt6 COMPONENTS Core Widgets Quick QuickControls2 OpenGL)
+find_package(Qt6 COMPONENTS Core Widgets Quick QuickControls2 OpenGL Charts)
 
 find_package(Qt6QmlImportScanner REQUIRED)
 
 set(SOURCES src/main.cpp
-            src/chartitem.cpp
             src/dataset.cpp
             src/sindataset.cpp
             src/plot.cpp
@@ -39,7 +38,7 @@ if(WASM)
     target_compile_definitions(chart-qt PRIVATE WASM)
 endif()
 
-target_link_libraries(chart-qt PRIVATE Qt6::Quick Qt6::QuickControls2 Qt6::Widgets Qt6::OpenGL)
+target_link_libraries(chart-qt PRIVATE Qt6::Quick Qt6::QuickControls2 Qt6::Widgets Qt6::OpenGL Qt6::Charts)
 qt_import_qml_plugins(chart-qt)
 
 if(WASM)

@@ -14,8 +14,7 @@ class Plot : public QObject
     Q_OBJECT
 public:
 
-    virtual QSGNode *sgNode() = 0;
-    virtual void update(double w, double h) = 0;
+
 
     void setDataSet(DataSet *dataset);
     inline DataSet *dataSet() const { return m_dataset; }

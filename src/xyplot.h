@@ -1,28 +1,27 @@
 #ifndef XYPLOT_H
 #define XYPLOT_H
 
-#include <QOpenGLShaderProgram>
-#include <QOpenGLBuffer>
-#include <QOpenGLVertexArrayObject>
+#include <QLineSeries>
 
 #include "plot.h"
+
+class QAbstractAxis;
 
 namespace chart_qt {
 
 class Node;
 
-class XYPlot : public Plot
+class XYPlot : public QObject
 {
+    Q_OBJECT
+    Q_PROPERTY(QLineSeries *series MEMBER m_series)
 public:
-    QSGNode *sgNode() override;
-    void update(double w, double h) override;
+    XYPlot();
+
+    void updateSeries();
 
 private:
-    QOpenGLShaderProgram m_program;
-    QOpenGLBuffer m_buffer;
-    QOpenGLVertexArrayObject m_vao;
-    size_t m_allocated = 0;
-    Node *m_node = nullptr;
+    QLineSeries *m_series;
 };
 
 }
