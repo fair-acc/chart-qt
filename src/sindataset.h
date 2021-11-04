@@ -11,18 +11,18 @@ public:
     SinDataSet();
     ~SinDataSet();
 
-    double get(int dimIndex, int index) const final;
+    float get(int dimIndex, int index) const final;
     int getDataCount() const final;
     int getDimension() const final { return 2; }
-    std::span<double> getValues(int dimIndex) final;
+    std::span<float> getValues(int dimIndex) final;
 
 protected:
     void timerEvent(QTimerEvent *e) final;
 
 private:
     double m_offset = 0;
-    std::vector<double> m_xdata;
-    std::vector<double> m_ydata;
+    std::vector<float> m_xdata;
+    std::vector<float> m_ydata;
 };
 
 }

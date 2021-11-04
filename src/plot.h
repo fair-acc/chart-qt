@@ -4,6 +4,7 @@
 #include <QObject>
 
 class QSGNode;
+class QQuickWindow;
 
 namespace chart_qt {
 
@@ -15,7 +16,7 @@ class Plot : public QObject
 public:
 
     virtual QSGNode *sgNode() = 0;
-    virtual void update(double w, double h) = 0;
+    virtual void update(QQuickWindow *window, double w, double h) = 0;
 
     void setDataSet(DataSet *dataset);
     inline DataSet *dataSet() const { return m_dataset; }

@@ -39,10 +39,6 @@ QSGNode *ChartItem::updatePaintNode(QSGNode *node, UpdatePaintNodeData *)
 {
     if (!node) {
         node = new QSGTransformNode;
-        for (auto p: m_plots) {
-            node->appendChildNode(p->sgNode());
-        }
-        m_plotsToInit.clear();
     }
 
     QMatrix4x4 matrix;
@@ -55,7 +51,7 @@ QSGNode *ChartItem::updatePaintNode(QSGNode *node, UpdatePaintNodeData *)
     m_plotsToInit.clear();
 
     for (auto p: m_plots) {
-        p->update(width(), height());
+        p->update(window(), width(), height());
     }
     return node;
 }
