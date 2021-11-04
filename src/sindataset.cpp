@@ -7,7 +7,7 @@ namespace chart_qt
 
 SinDataSet::SinDataSet()
 {
-    startTimer(10);
+    startTimer(40);
     m_xdata.resize(1e5);
     m_ydata.resize(1e5);
 }
