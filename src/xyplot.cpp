@@ -21,26 +21,10 @@ class Node : public QSGRenderNode
 {
 public:
     Node()
-#ifdef WASM
-        : m_doubleSupported(false)
-#else
-        : m_doubleSupported(QOpenGLContext::currentContext()->format().majorVersion() >= 4 &&
-                            QOpenGLContext::currentContext()->format().minorVersion() >= 1)
-#endif // WASM
     {
         static const char *vs_float = "\
             attribute float vx;\n\
             attribute float vy;\n\
-            uniform mat4 matrix;\n\
-            void main()\n\
-            {\n\
-                gl_Position = matrix * vec4(vx, vy, 0, 1);\n\
-            }";
-
-        static const char *vs_double = "\
-            #version 410\n\
-            in double vx;\n\
-            in double vy;\n\
             uniform mat4 matrix;\n\
             void main()\n\
             {\n\
@@ -53,7 +37,7 @@ public:
                 gl_FragColor = vec4(1, 0, 0, 1);\n\
             }";
 
-        m_program.addShaderFromSourceCode(QOpenGLShader::Vertex, m_doubleSupported ? vs_double : vs_float);
+        m_program.addShaderFromSourceCode(QOpenGLShader::Vertex, vs_float);
         m_program.addShaderFromSourceCode(QOpenGLShader::Fragment, fs);
 
         m_program.link();
@@ -79,7 +63,7 @@ public:
         m_buffer.bind();
 
         const int dataCount = ds->getDataCount();
-        const int dataSize = dataCount * (m_doubleSupported ? sizeof(double) : sizeof(float)) * 2;
+        const int dataSize = dataCount * sizeof(float) * 2;
         if (m_allocated != dataCount) {
             m_buffer.allocate(dataSize);
             m_allocated = dataCount;
@@ -97,22 +81,12 @@ public:
         // can't use QOpenGLBuffer::map directly, because on WASM, only glMapBufferRange is available and it must be
         // called with GL_MAP_INVALIDATE_BUFFER_BIT
         auto data = gl->glMapBufferRange(GL_ARRAY_BUFFER,  0, dataSize, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+        auto xdst = static_cast<float *>(data);
+        auto ydst = xdst + dataCount;
 
-        if (m_doubleSupported) {
-            auto xdst = static_cast<double *>(data);
-            auto ydst = xdst + dataCount;
+        memcpy(xdst, xdata, dataCount * sizeof(float));
+        memcpy(ydst, ydata, dataCount * sizeof(float));
 
-            memcpy(xdst, xdata, dataCount * sizeof(double));
-            memcpy(ydst, ydata, dataCount * sizeof(double));
-        } else {
-            auto xdst = static_cast<float *>(data);
-            auto ydst = xdst + dataCount;
-
-            for (int i = 0; i < dataCount; ++i) {
-                xdst[i] = float(xdata[i]);
-                ydst[i] = float(ydata[i]);
-            }
-        }
         gl->glUnmapBuffer(GL_ARRAY_BUFFER);
 
                         m_vao.release();
@@ -124,16 +98,8 @@ public:
         gl->glEnableVertexAttribArray(m_vxLocation);
         gl->glEnableVertexAttribArray(m_vyLocation);
 
-        if (m_doubleSupported) {
-#ifndef WASM
-            auto gl4 = QOpenGLVersionFunctionsFactory::get<QOpenGLFunctions_4_1_Core>();
-            gl4->glVertexAttribLPointer(m_vxLocation, 1, GL_DOUBLE, 0, 0);
-            gl4->glVertexAttribLPointer(m_vyLocation, 1, GL_DOUBLE, 0, (void *)(m_allocated * sizeof(double)));
-#endif
-        } else {
-            gl->glVertexAttribPointer(m_vxLocation, 1, GL_FLOAT, true, 0, 0);
-            gl->glVertexAttribPointer(m_vyLocation, 1, GL_FLOAT, true, 0, (void *)(m_allocated * sizeof(float)));
-        }
+        gl->glVertexAttribPointer(m_vxLocation, 1, GL_FLOAT, true, 0, 0);
+        gl->glVertexAttribPointer(m_vyLocation, 1, GL_FLOAT, true, 0, (void *)(m_allocated * sizeof(float)));
     }
 
     void prepare() final
@@ -174,7 +140,6 @@ public:
         m_rect = r;
     }
 
-    const bool m_doubleSupported;
     int m_vxLocation;
     int m_vyLocation;
     QOpenGLShaderProgram m_program;

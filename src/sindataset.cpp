@@ -16,12 +16,12 @@ SinDataSet::~SinDataSet()
 {
 }
 
-double SinDataSet::get(int dimIndex, int index) const
+float SinDataSet::get(int dimIndex, int index) const
 {
     return (dimIndex == 0 ? m_xdata : m_ydata)[index];
 }
 
-std::span<double> SinDataSet::getValues(int dimIndex)
+std::span<float> SinDataSet::getValues(int dimIndex)
 {
     return dimIndex == 0 ? m_xdata : m_ydata;
 }
@@ -37,7 +37,7 @@ void SinDataSet::timerEvent(QTimerEvent *e)
     m_offset += 0.1;
 
     for (int i = 0; i < 1e5; ++i) {
-        const double x = double(i) / 100.;
+        const float x = float(i) / 100.;
         m_xdata[i] = x;
         m_ydata[i] = std::sin(m_offset + x);
     }

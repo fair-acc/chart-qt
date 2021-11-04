@@ -26,7 +26,7 @@ public:
      * @param index data point index
      * @return the x value
      */
-    virtual double get(int dimIndex, int index) const = 0;
+    virtual float get(int dimIndex, int index) const = 0;
 
 //     /**
 //      * Return the axis description of the i-th axis.
@@ -105,7 +105,7 @@ public:
 //      * @param dimIndex the dimension index (ie. '0' equals 'X', '1' equals 'Y')
 //      * @return the x value array
 //      */
-    virtual std::span<double> getValues(int dimIndex) = 0;
+    virtual std::span<float> getValues(int dimIndex) = 0;
 //
 //     /**
 //      * @return Read-Write Lock to guard the DataSet
