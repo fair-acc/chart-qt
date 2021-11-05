@@ -16,7 +16,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInf
 endif()
 
 find_package(Sanitizers)
-find_package(Qt6 COMPONENTS Core Widgets Quick QuickControls2 OpenGL ShaderTools Quick3D)
+find_package(Qt6 COMPONENTS Core Widgets Quick QuickControls2 OpenGL Quick3D)
 
 find_package(Qt6QmlImportScanner REQUIRED)
 
@@ -40,11 +40,6 @@ endif()
 target_include_directories(chart-qt PRIVATE ${Qt6Gui_PRIVATE_INCLUDE_DIRS})
 target_link_libraries(chart-qt PRIVATE Qt6::Quick Qt6::QuickControls2 Qt6::Quick3D)
 qt_import_qml_plugins(chart-qt)
-
-qt6_add_shaders(chart-qt "shaders" PREFIX "/" FILES
-    "src/shaders/xyplot_float.vert"
-    "src/shaders/xyplot_float.frag"
-)
 
 if(WASM)
     link_qt_static(chart-qt)
