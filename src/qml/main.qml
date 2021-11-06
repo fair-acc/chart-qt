@@ -3,6 +3,8 @@ import ChartQt 1.0
 
 ApplicationWindow {
     visible: true
+    width: 1980
+    height: 450
 
     menuBar: MenuBar {
         Menu {
