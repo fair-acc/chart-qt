@@ -2,16 +2,12 @@
 #include "plot.h"
 
 #include <QOpenGLContext>
-#include <QOpenGLFunctions>
 #include <QSGGeometryNode>
 #include <QSGGeometry>
 #include <QSGFlatColorMaterial>
-#include <QSGRenderNode>
-#include <QOpenGLExtraFunctions>
 #include <QFile>
 #include <QQuickWindow>
 
-#include <QSGRendererInterface>
 #include <private/qrhi_p.h>
 
 #ifndef WASM
@@ -23,38 +19,40 @@
 
 namespace chart_qt {
 
-XYPlot::XYPlot()
-{
+XYPlot::XYPlot() {
     auto ds = new SinDataSet;
     connect(ds, &DataSet::dataChanged, this, &XYPlot::updateData);
 
-    setPrimitiveType(QQuick3DGeometry::PrimitiveType::LineStrip);
     setStride(3 * sizeof(float));
+    setPrimitiveType(QQuick3DGeometry::PrimitiveType::LineStrip);
     addAttribute(QQuick3DGeometry::Attribute::PositionSemantic, 0, QQuick3DGeometry::Attribute::F32Type);
 
     emit ds->dataChanged(0, 0);
 }
 
-void XYPlot::updateData()
-{
+void XYPlot::updateData() {
     auto ds = static_cast<DataSet *>(sender());
-    QByteArray vertices;
 
+    constexpr int stride = 3 * sizeof(float);
     const int dataCount = ds->getDataCount();
-
-    const auto xdata = ds->getValues(0).data();
-    const auto ydata = ds->getValues(1).data();
-
-    for (int i = 0; i < dataCount; ++i) {
-        vertices.append(reinterpret_cast<const char *>(&xdata[i]), 4);
-        vertices.append(reinterpret_cast<const char *>(&ydata[i]), 4);
-        static const float zero = 0.f;
-        vertices.append(reinterpret_cast<const char *>(&zero), 4);
+    const int nBytesRequired = stride * dataCount;
+    if (m_vertices.size() < nBytesRequired || m_vertices.size() > nBytesRequired) {
+        m_vertices.resize(nBytesRequired);
     }
 
-    setVertexData(vertices);
-
-    update();
+    const auto data = reinterpret_cast<float *>(m_vertices.data());
+    const auto xData = ds->getValues(0).data();
+    const auto yData = ds->getValues(1).data();
+    for (int i = 0; i < dataCount; ++i) {
+        const int index = i * 3;
+        data[index + 0] = xData[i]; // x-axis
+        data[index + 1] = yData[i]; // y-axis
+        //data[index + 2] = 0.0F; // z-axis
+    }
+    setVertexData(m_vertices);
+    update(); // resource leak somewhere in QSGRenderThread: CPU & GPU usage increases slowly over time (N.B. const memory usage), exists since 5.15.2 at least
+    // possibly related:
+    // https://forum.qt.io/topic/117182/qtquick3d-how-to-customize-geometry-data-and-update-it-in-real-time/5
 }
 
 }
