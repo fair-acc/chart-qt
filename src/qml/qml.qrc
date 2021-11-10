@@ -1,5 +1,7 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource>
     <file>main.qml</file>
+    <file>waterfall.vert</file>
+    <file>waterfall.frag</file>
 </qresource>
 </RCC>

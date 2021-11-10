@@ -22,6 +22,12 @@ SinDataSet::~SinDataSet()
 {
 }
 
+SinDataSet *SinDataSet::instance()
+{
+    static SinDataSet s;
+    return &s;
+}
+
 float SinDataSet::get(int dimIndex, int index) const
 {
     return (dimIndex == 0 ? m_xdata : m_ydata)[index];

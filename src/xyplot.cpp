@@ -20,7 +20,7 @@
 namespace chart_qt {
 
 XYPlot::XYPlot() {
-    auto ds = new SinDataSet;
+    auto ds = SinDataSet::instance();
     connect(ds, &DataSet::dataChanged, this, &XYPlot::updateData);
 
     setStride(3 * sizeof(float));

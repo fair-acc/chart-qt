@@ -16,6 +16,8 @@ public:
     int getDimension() const final { return 2; }
     std::span<float> getValues(int dimIndex) final;
 
+    static SinDataSet *instance();
+
 protected:
     void timerEvent(QTimerEvent *e) final;
 

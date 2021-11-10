@@ -25,6 +25,7 @@ set(SOURCES src/main.cpp
             src/sindataset.cpp
             src/plot.cpp
             src/xyplot.cpp
+            src/waterfallplot.cpp
             src/qml/qml.qrc
             )
 
@@ -37,7 +38,7 @@ add_sanitizers(chart-qt)
 if(WASM)
     target_compile_definitions(chart-qt PRIVATE WASM)
 endif()
-target_include_directories(chart-qt PRIVATE ${Qt6Gui_PRIVATE_INCLUDE_DIRS})
+target_include_directories(chart-qt PRIVATE ${Qt6Gui_PRIVATE_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/src)
 target_link_libraries(chart-qt PRIVATE Qt6::Quick Qt6::QuickControls2 Qt6::Quick3D)
 qt_import_qml_plugins(chart-qt)
 
