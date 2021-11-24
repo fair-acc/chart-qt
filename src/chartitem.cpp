@@ -14,10 +14,16 @@ ChartItem::ChartItem(QQuickItem *parent)
 {
     setFlag(QQuickItem::ItemHasContents);
 
-    auto dataset = new SinDataSet;
-    auto plot = new XYPlot;
-    plot->setDataSet(dataset);
-    addPlot(plot);
+    // auto dataset = new SinDataSet;
+    // auto plot = new XYPlot;
+    // plot->setDataSet(dataset);
+    // addPlot(plot);
+}
+
+static SinDataSet *dataset()
+{
+    static SinDataSet ds;
+    return &ds;
 }
 
 ChartItem::~ChartItem()
@@ -27,6 +33,8 @@ ChartItem::~ChartItem()
 
 void ChartItem::addPlot(Plot *plot)
 {
+    plot->setDataSet(dataset());
+
     m_plotsToInit.push_back(plot);
     m_plots.push_back(plot);
 
@@ -41,9 +49,9 @@ QSGNode *ChartItem::updatePaintNode(QSGNode *node, UpdatePaintNodeData *)
         node = new QSGTransformNode;
     }
 
-    QMatrix4x4 matrix;
-    matrix.translate(x(), y());
-    static_cast<QSGTransformNode *>(node)->setMatrix(matrix);
+    // QMatrix4x4 matrix;
+    // matrix.translate(x(), y());
+    // static_cast<QSGTransformNode *>(node)->setMatrix(matrix);
 
     for (auto p: m_plotsToInit) {
         node->appendChildNode(p->sgNode());

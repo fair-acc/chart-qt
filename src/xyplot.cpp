@@ -39,7 +39,7 @@ public:
             return swapchain->renderPassDescriptor();
         }
 
-        auto target = static_cast<QRhiRenderTarget *>(ri->getResource(m_window, 
+        auto target = static_cast<QRhiRenderTarget *>(ri->getResource(m_window,
                                                                       QSGRendererInterface::RhiRedirectRenderTarget));
         return target->renderPassDescriptor();
     }
@@ -149,10 +149,10 @@ public:
         if (!m_pipeline) {
             init();
         }
-        
+
         if (m_dataset) {
             updateData();
-        }   
+        }
     }
 
     std::tuple<QSize, QRhiCommandBuffer *> getRenderResources()
@@ -167,7 +167,7 @@ public:
 
         auto cmdbuf = static_cast<QRhiCommandBuffer *>(ri->getResource(m_window,
                                                                        QSGRendererInterface::RhiRedirectCommandBuffer));
-        auto target = static_cast<QRhiRenderTarget *>(ri->getResource(m_window, 
+        auto target = static_cast<QRhiRenderTarget *>(ri->getResource(m_window,
                                                                       QSGRendererInterface::RhiRedirectRenderTarget));
 
         return { target->pixelSize(), cmdbuf };

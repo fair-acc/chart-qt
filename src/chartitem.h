@@ -14,7 +14,7 @@ public:
     ChartItem(QQuickItem *parent = nullptr);
     ~ChartItem();
 
-    Q_INVOKABLE void addPlot(Plot *plot);
+    Q_INVOKABLE void addPlot(chart_qt::Plot *plot);
 
 protected:
     QSGNode *updatePaintNode(QSGNode *node, UpdatePaintNodeData *data) override;
