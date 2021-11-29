@@ -53,3 +53,10 @@ qt6_add_shaders(chart-qt "shaders" PREFIX "/" FILES
 if(WASM)
     link_qt_static(chart-qt)
 endif()
+
+add_custom_target(package)
+set(package_files chart-qt)
+set(package_dir ${CMAKE_BINARY_DIR}/package)
+foreach(ConfigFile ${package_files})
+    add_custom_command(TARGET package PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory ${package_dir} COMMAND ${CMAKE_COMMAND} -E copy ${ConfigFile} ${package_dir})
+endforeach()
