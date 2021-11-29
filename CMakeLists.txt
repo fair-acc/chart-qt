@@ -49,6 +49,11 @@ endif()
 add_custom_target(package)
 set(package_files chart-qt)
 set(package_dir ${CMAKE_BINARY_DIR}/package)
+
+if (WASM)
+    set(package_files chart-qt.html chart-qt.js chart-qt.wasm qtloader.js qtlogo.svg)
+endif()
+
 foreach(ConfigFile ${package_files})
     add_custom_command(TARGET package PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory ${package_dir} COMMAND ${CMAKE_COMMAND} -E copy ${ConfigFile} ${package_dir})
 endforeach()

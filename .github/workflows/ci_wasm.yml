@@ -1,0 +1,94 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI_wasm
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  push:
+    branches: '*'
+  pull_request:
+    branches: [ main ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      - name: Init submodules
+        run: git submodule update --init --recursive
+
+      - name: Cache host Qt
+        id: cache-host-qt
+        uses: actions/cache@v1  # not v2!
+        with:
+          path: '${{ github.workspace }}/Qt/'
+          key: ${{ runner.os }}-QtCache_wasm32-host
+
+      - name: Install host Qt
+        uses: jurplel/install-qt-action@v2
+        with:
+          cached: ${{ steps.cache-host-qt.outputs.cache-hit }}
+          version: '6.2.1'
+          arch: gcc_64
+          set-env: false
+          dir: '${{ github.workspace }}/Qt/'
+          modules: qtshadertools
+
+      - name: Cache Qt
+        id: cache-qt
+        uses: actions/cache@v1  # not v2!
+        with:
+          path: '${{ github.workspace }}/Qt/'
+          key: ${{ runner.os }}-QtCache_wasm32
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v2
+        with:
+          cached: ${{ steps.cache-qt.outputs.cache-hit }}
+          version: '6.2.1'
+          arch: wasm_32
+          dir: '${{ github.workspace }}/Qt/'
+          set-env: false
+          modules: qtshadertools
+
+      - run: ls ${{ github.workspace }}/Qt/Qt/6.2.1/wasm_32/lib/cmake
+
+      - name: Install emscripten
+        uses: mymindstorm/setup-emsdk@v11
+        with:
+          version: 2.0.14
+          actions-cache-folder: 'emsdk-cache'
+
+      - run: emcc -v
+
+      # Runs a single command using the runners shell
+      - name: Configure
+        run: cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo
+                   -DCMAKE_TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake
+                   -DWASM=On
+                   -DCMAKE_PREFIX_PATH=${{ github.workspace }}/Qt/Qt/6.2.1/wasm_32
+                   -DQT_HOST_PATH=${{ github.workspace }}/Qt/Qt/6.2.1/gcc_64
+                   -DCMAKE_EXE_LINKER_FLAGS="-s TOTAL_MEMORY=327680000"
+                   .
+
+      # Runs a set of commands using the runners shell
+      - name: Build
+        run: cmake --build . --parallel
+
+      - name: Upload package
+        run: cmake --build . --parallel --target package
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: package_wasm32
+          path: package/
