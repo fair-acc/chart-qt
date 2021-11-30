@@ -59,7 +59,7 @@ jobs:
           arch: wasm_32
           dir: '${{ github.workspace }}/Qt/'
           set-env: false
-          modules: qtshadertools
+          modules: qtquick3d qtshadertools
 
       - run: ls ${{ github.workspace }}/Qt/Qt/6.2.1/wasm_32/lib/cmake
 
