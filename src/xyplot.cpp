@@ -111,7 +111,7 @@ public:
         // By returning NoExternalRendering the scene graph renderer doesn't call beginExternal()
         // endExternal() around the call to render(), which we need given we're not calling directly
         // OpenGL/Vulkan stuff, but we're only going through the QRhi interface
-        return QSGRenderNode::NoExternalRendering;
+        return QSGRenderNode::DepthAwareRendering | QSGRenderNode::NoExternalRendering;
     }
 
     void needsUpdate(DataSet *ds)
