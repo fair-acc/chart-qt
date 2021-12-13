@@ -19,7 +19,7 @@ ApplicationWindow {
     ChartItem {
         id: chart
         anchors.top: parent.top
-        anchors.left: parent.left
+        anchors.left: somelist
         anchors.right: parent.right
         anchors.bottom: parent.verticalCenter
 
@@ -72,7 +72,7 @@ ApplicationWindow {
     }
     ChartItem {
         id: waterfall
-        anchors.left: parent.left
+        anchors.left: somelist
         anchors.right: parent.right
         anchors.top: chart.bottom
         anchors.bottom: parent.bottom
@@ -90,5 +90,19 @@ ApplicationWindow {
 
 
     }
+    TestNetworkModel { id: modelList }
+    ListView {
+        id: somelist
+        anchors {
+            left: parent.left
+            top: parent.top
+            bottom: parent.bottom
+            right: parent.horizontalCenter
+        }
+        model : modelList // listOfStringmodeLs
 
+        delegate: Text {
+            text: display
+        }
+    }
 }
