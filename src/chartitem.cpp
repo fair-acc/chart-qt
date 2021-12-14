@@ -43,25 +43,49 @@ void ChartItem::addPlot(Plot *plot)
     update();
 }
 
+bool ChartItem::paused() const
+{
+    return m_paused;
+}
+
+void ChartItem::setPaused(bool p)
+{
+    if (m_paused != p) {
+        m_paused = p;
+        emit pausedChanged();
+    }
+}
+
 QSGNode *ChartItem::updatePaintNode(QSGNode *node, UpdatePaintNodeData *)
 {
     if (!node) {
         node = new QSGTransformNode;
     }
 
-    // QMatrix4x4 matrix;
-    // matrix.translate(x(), y());
-    // static_cast<QSGTransformNode *>(node)->setMatrix(matrix);
+    QMatrix4x4 matrix;
+    matrix.scale(m_zoom.x(), m_zoom.y());
+    static_cast<QSGTransformNode *>(node)->setMatrix(matrix);
 
     for (auto p: m_plotsToInit) {
         node->appendChildNode(p->sgNode());
     }
     m_plotsToInit.clear();
 
-    for (auto p: m_plots) {
-        p->update(window(), width(), height());
+    if (!m_paused) {
+        for (auto p: m_plots) {
+            p->update(window(), width(), height());
+        }
     }
     return node;
+}
+
+void ChartItem::wheelEvent(QWheelEvent *evt)
+{
+    double m = evt->angleDelta().y() / 100.;
+    if (m < 0) {
+        m = 1 / -m;
+    }
+    m_zoom[0] *= m;
 }
 
 }

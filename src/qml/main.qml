@@ -16,6 +16,13 @@ ApplicationWindow {
         }
     }
 
+    header: ToolBar {
+        ToolButton {
+            text: chart.paused ? "Resume" : "Pause"
+            onClicked: chart.paused = !chart.paused
+        }
+    }
+
     ChartItem {
         id: chart
         anchors.top: parent.top

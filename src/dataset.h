@@ -106,6 +106,10 @@ public:
 //      * @return the x value array
 //      */
     virtual std::span<float> getValues(int dimIndex) = 0;
+
+    bool hasErrors = false;
+    virtual std::span<float> getPositiveErrors(int dimIndex) { return {}; }
+    virtual std::span<float> getNegativeErrors(int dimIndex) { return {}; }
 //
 //     /**
 //      * @return Read-Write Lock to guard the DataSet

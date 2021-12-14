@@ -46,6 +46,8 @@ qt_import_qml_plugins(chart-qt)
 qt6_add_shaders(chart-qt "shaders" PREFIX "/" FILES
     "src/shaders/xyplot_float.vert"
     "src/shaders/xyplot_float.frag"
+    "src/shaders/xyplot_errorbars.vert"
+    "src/shaders/xyplot_errorbars.frag"
     "src/shaders/waterfall.vert"
     "src/shaders/waterfall.frag"
 )
