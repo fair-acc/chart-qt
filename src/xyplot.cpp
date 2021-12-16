@@ -20,6 +20,7 @@
 #endif // WASM
 
 #include "dataset.h"
+#include "axis.h"
 
 namespace chart_qt {
 
@@ -238,10 +239,7 @@ public:
 
     void render(const QSGRenderNode::RenderState *state) final
     {
-        QMatrix4x4 m = m_matrix;
-        m.translate(0, m_rect.height() / 2);
-        m.scale(20, 150);
-        m = (*state->projectionMatrix()) * m;
+        QMatrix4x4 m = (*state->projectionMatrix()) * m_matrix * m_transform;
 
         auto *ubuf = reinterpret_cast<float *>(m_ubuf->beginFullDynamicBufferUpdateForCurrentFrame());
         memcpy(ubuf, m.data(), 16 * sizeof(float));
@@ -266,10 +264,10 @@ public:
         cmdbuf->draw(m_allocated);
     }
 
-    void setWindow(QQuickWindow *win, const QSize &rect)
+    void setWindow(QQuickWindow *win, const QMatrix4x4 &transform)
     {
         m_window = win;
-        m_rect = rect;
+        m_transform = transform;
     }
 
     QRhiGraphicsPipeline *m_pipeline = nullptr;
@@ -285,7 +283,7 @@ public:
     QRhiBuffer *m_ubuf;
     size_t m_allocated = 0;
     QMatrix4x4 m_matrix;
-    QSize m_rect;
+    QMatrix4x4 m_transform;
     DataSet *m_dataset = nullptr;
 };
 
@@ -297,10 +295,25 @@ QSGNode *XYPlot::sgNode()
     return m_node;
 }
 
-void XYPlot::update(QQuickWindow *window, double w, double h)
+void XYPlot::update(QQuickWindow *window, double w, double h, bool paused)
 {
-    m_node->setWindow(window, QSize(w, h));
-    if (m_needsUpdate) {
+    QMatrix4x4 m;
+    const auto xa = xAxis();
+    const auto ya = yAxis();
+
+    const bool xinv = xa && xa->direction() == Axis::Direction::RightToLeft;
+    const bool yinv = ya && ya->direction() == Axis::Direction::BottomToTop;
+
+    double xscale = xa ? (xinv ? -w : w) / (xa->max() - xa->min()) : 1;
+    double yscale = ya ? (yinv ? -h : h) / (ya->max() - ya->min()) : 1;
+    m.scale(xscale, yscale);
+
+    double xtr = xa ? (xinv ? -xa->max() : -xa->min()) : 0;
+    double ytr = ya ? (yinv ? -ya->max() : -ya->min()) : 0;
+    m.translate(xtr, ytr);
+
+    m_node->setWindow(window, m);
+    if (m_needsUpdate && !paused) {
         m_needsUpdate = false;
 
         m_node->needsUpdate(dataSet());

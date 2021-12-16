@@ -22,6 +22,7 @@ find_package(Qt6QmlImportScanner REQUIRED)
 
 set(SOURCES src/main.cpp
             src/chartitem.cpp
+            src/axis.cpp
             src/dataset.cpp
             src/sindataset.cpp
             src/plot.cpp
@@ -50,6 +51,11 @@ qt6_add_shaders(chart-qt "shaders" PREFIX "/" FILES
     "src/shaders/xyplot_errorbars.frag"
     "src/shaders/waterfall.vert"
     "src/shaders/waterfall.frag"
+)
+
+qt6_add_shaders(chart-qt "qqshaders" PREFIX "/"  BATCHABLE FILES
+    "src/shaders/axismaterial.vert"
+    "src/shaders/axismaterial.frag"
 )
 
 if(WASM)

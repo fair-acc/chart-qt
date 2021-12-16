@@ -9,6 +9,7 @@
 #include <private/qrhi_p.h>
 
 #include "dataset.h"
+#include "axis.h"
 
 namespace chart_qt {
 
@@ -149,8 +150,6 @@ public:
         return { target->pixelSize(), cmdbuf };
     }
 
-    double WID = 1;
-
     void updateData()
     {
         const int dataCount = m_dataset->getDataCount();
@@ -165,36 +164,7 @@ public:
         }
 
         const auto xdata = m_dataset->getValues(0).data();
-        const float startX = xdata[0];
-        const float endX = xdata[dataCount - 1];
-
-        const float startU = 0;
-        const float endU = m_rect.width() / 20. / (endX - startX);
-
-        static const float vertices[] = {
-            0, 0,
-            0, 1,
-            1, 1,
-            0, 0,
-            1, 0,
-
-            0, 0,
-            0, 1,
-            1, 1,
-            0, 0,
-            1, 0
-        };
-
-        auto uv = reinterpret_cast<float *>(m_vbuf->beginFullDynamicBufferUpdateForCurrentFrame()) + 10;
-#ifdef WASM
-        memcpy(uv - 10, vertices, 80);
-#endif
-        uv[0] = startU;
-        uv[2] = startU;
-        uv[4] = endU;
-        uv[6] = startU;
-        uv[8] = endU;
-        m_vbuf->endFullDynamicBufferUpdateForCurrentFrame();
+        m_dataWidth = xdata[dataCount - 1];
 
         QRhiTextureSubresourceUploadDescription subres(m_lineData.data(), 10000 * 4);
         subres.setDataStride(m_lineData.size() * 4);
@@ -241,6 +211,34 @@ public:
         m.scale(m_rect.width(), m_rect.height());
         m = (*state->projectionMatrix()) * m;
 
+        float startU = m_xaxis[0] / m_dataWidth;
+        float endU = m_xaxis[1] / m_dataWidth;
+
+        static const float vertices[] = {
+            0, 0,
+            0, 1,
+            1, 1,
+            0, 0,
+            1, 0,
+
+            0, 0,
+            0, 1,
+            1, 1,
+            0, 0,
+            1, 0
+        };
+
+        auto uv = reinterpret_cast<float *>(m_vbuf->beginFullDynamicBufferUpdateForCurrentFrame()) + 10;
+#ifdef WASM
+        memcpy(uv - 10, vertices, 80);
+#endif
+        uv[0] = startU;
+        uv[2] = startU;
+        uv[4] = endU;
+        uv[6] = startU;
+        uv[8] = endU;
+        m_vbuf->endFullDynamicBufferUpdateForCurrentFrame();
+
         auto *ubuf = reinterpret_cast<float *>(m_ubuf->beginFullDynamicBufferUpdateForCurrentFrame());
         memcpy(ubuf, m.data(), 16 * sizeof(float));
         memcpy(ubuf + 16, m_gradient, 2 * sizeof(float));
@@ -284,8 +282,10 @@ public:
     QSize m_rect;
     DataSet *m_dataset = nullptr;
     int m_lineOffset = 0;
+    double m_dataWidth = 1;
     std::vector<float> m_lineData;
     float m_gradient[2] = { 0, 0 };
+    float m_xaxis[2] = { 0, 1 };
 };
 
 QSGNode *WaterfallPlot::sgNode()
@@ -296,11 +296,15 @@ QSGNode *WaterfallPlot::sgNode()
     return m_node;
 }
 
-void WaterfallPlot::update(QQuickWindow *window, double w, double h)
+void WaterfallPlot::update(QQuickWindow *window, double w, double h, bool paused)
 {
+    if (auto xa = xAxis()) {
+        m_node->m_xaxis[0] = xa->min();
+        m_node->m_xaxis[1] = xa->max();
+    }
     m_node->setWindow(window, QSize(w, h));
     m_node->setGradient(m_gradientStart, m_gradientStop);
-    if (m_needsUpdate) {
+    if (m_needsUpdate && !paused) {
         m_needsUpdate = false;
 
         m_node->needsUpdate(dataSet());

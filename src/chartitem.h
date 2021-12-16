@@ -6,6 +6,8 @@
 namespace chart_qt {
 
 class Plot;
+class Axis;
+class AxisNode;
 
 class ChartItem : public QQuickItem
 {
@@ -16,13 +18,20 @@ public:
     ~ChartItem();
 
     Q_INVOKABLE void addPlot(chart_qt::Plot *plot);
+    Q_INVOKABLE void addAxis(Axis *axis);
 
     bool paused() const;
     void setPaused(bool paused);
 
+    void componentComplete() override;
+
 protected:
+    void geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry) override;
+    void updatePolish() override;
     QSGNode *updatePaintNode(QSGNode *node, UpdatePaintNodeData *data) override;
     void wheelEvent(QWheelEvent *evt) override;
+    void mousePressEvent(QMouseEvent *evt) override;
+    void mouseMoveEvent(QMouseEvent *evt) override;
 
 signals:
     void pausedChanged();
@@ -34,8 +43,14 @@ private:
     std::vector<Plot *> m_plots;
     std::vector<Plot *> m_plotsToInit;
     std::vector<Plot *> m_plotsToUpdate;
-    QVector2D m_zoom = { 1, 1 };
     bool m_paused = false;
+    double m_verticalMargin = 60;
+    double m_horizontalMargin = 30;
+
+    struct AxisLayout;
+    struct AxisNode;
+    std::vector<std::unique_ptr<AxisLayout>> m_axes;
+    QPointF m_pressPos;
 };
 
 }

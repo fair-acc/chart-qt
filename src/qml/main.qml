@@ -29,8 +29,26 @@ ApplicationWindow {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.verticalCenter
+        clip: true
 
-        XYPlot { id: xy }
+        XYPlot {
+            id: xy
+            xAxis: bottomAxis
+            yAxis: leftAxis
+        }
+
+        Axis {
+            id: bottomAxis
+            position: Axis.Bottom
+            max: 10
+        }
+
+        Axis {
+            id: leftAxis
+            position: Axis.Left
+            min: -1
+            max: 1
+        }
 
         Component.onCompleted: {
             chart.addPlot(xy)
@@ -38,8 +56,9 @@ ApplicationWindow {
 
         MouseArea {
             id: topHandle
-            width: parent.width
+            width: 20
             height: 10
+            anchors.right: parent.right
             y: parent.height * 0.2 - height / 2
             cursorShape: Qt.SizeVerCursor
 
@@ -52,7 +71,8 @@ ApplicationWindow {
 
         MouseArea {
             id: bottomHandle
-            width: parent.width
+            width: 20
+            anchors.right: parent.right
             cursorShape: Qt.SizeVerCursor
             y: parent.height * 0.8 - height / 2
             height: 10
@@ -89,6 +109,8 @@ ApplicationWindow {
 
             gradientStart: 1 - (bottomHandle.y + bottomHandle.height / 2) / chart.height
             gradientStop: 1 - (topHandle.y + topHandle.height / 2) / chart.height
+
+            xAxis: bottomAxis
         }
 
         Component.onCompleted: {
