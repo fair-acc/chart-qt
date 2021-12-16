@@ -2,6 +2,7 @@
 #define PLOT_H
 
 #include <QObject>
+#include <QQmlParserStatus>
 
 class QSGNode;
 class QQuickWindow;
@@ -11,9 +12,10 @@ namespace chart_qt {
 class DataSet;
 class Axis;
 
-class Plot : public QObject
+class Plot : public QObject, public QQmlParserStatus
 {
     Q_OBJECT
+    Q_INTERFACES(QQmlParserStatus)
     Q_PROPERTY(Axis *xAxis READ xAxis WRITE setXAxis NOTIFY xAxisChanged)
     Q_PROPERTY(Axis *yAxis READ yAxis WRITE setYAxis NOTIFY yAxisChanged)
 public:
@@ -31,6 +33,9 @@ public:
     void setYAxis(Axis *axis);
 
     bool m_needsUpdate = false;
+
+    void classBegin() override;
+    void componentComplete() override;
 
 signals:
     void dataSetChanged();

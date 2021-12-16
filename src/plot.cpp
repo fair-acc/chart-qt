@@ -1,6 +1,7 @@
 #include "plot.h"
 #include "dataset.h"
 #include "axis.h"
+#include "chartitem.h"
 
 namespace chart_qt {
 
@@ -75,6 +76,18 @@ void Plot::setYAxis(Axis *axis)
 void Plot::resetYAxis()
 {
     setYAxis(nullptr);
+}
+
+void Plot::classBegin()
+{
+
+}
+
+void Plot::componentComplete()
+{
+    if (auto c = qobject_cast<ChartItem *>(parent())) {
+        c->addPlot(this);
+    }
 }
 
 }

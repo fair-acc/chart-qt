@@ -50,10 +50,6 @@ ApplicationWindow {
             max: 1
         }
 
-        Component.onCompleted: {
-            chart.addPlot(xy)
-        }
-
         MouseArea {
             id: topHandle
             width: 20
@@ -112,12 +108,6 @@ ApplicationWindow {
 
             xAxis: bottomAxis
         }
-
-        Component.onCompleted: {
-            waterfall.addPlot(wf)
-        }
-
-
     }
 
 }
