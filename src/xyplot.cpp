@@ -74,6 +74,7 @@ public:
 
         m_pipeline->setShaderStages({ { QRhiShaderStage::Type::Vertex, vshader }, { QRhiShaderStage::Type::Fragment, fshader } });
         m_pipeline->setRenderPassDescriptor(renderPassDescriptor());
+        m_pipeline->setFlags(QRhiGraphicsPipeline::Flag::UsesScissor);
 
         m_resourceBindings = rhi->newShaderResourceBindings();
         const auto uniforms = vshader.description().uniformBlocks();
@@ -119,6 +120,7 @@ public:
 
         m_errorBarsPipeline->setShaderStages({ { QRhiShaderStage::Type::Vertex, vshader }, { QRhiShaderStage::Type::Fragment, fshader } });
         m_errorBarsPipeline->setRenderPassDescriptor(renderPassDescriptor());
+        m_errorBarsPipeline->setFlags(QRhiGraphicsPipeline::Flag::UsesScissor);
 
         m_errorBarsBindings = rhi->newShaderResourceBindings();
         const auto uniforms = vshader.description().uniformBlocks();
@@ -249,6 +251,9 @@ public:
 
         cmdbuf->setViewport(QRhiViewport(0, 0, size.width(), size.height()));
 
+        const int y = size.height() - m_chartRect.y() - m_chartRect.height();
+        cmdbuf->setScissor(QRhiScissor(m_chartRect.x(), y, m_chartRect.width(), m_chartRect.height()));
+
         if (m_errorBarsPipeline) {
             cmdbuf->setGraphicsPipeline(m_errorBarsPipeline);
             const QRhiCommandBuffer::VertexInput bindings[] = { { m_errorBarsBuffer, 0 } };
@@ -284,6 +289,7 @@ public:
     size_t m_allocated = 0;
     QMatrix4x4 m_matrix;
     QMatrix4x4 m_transform;
+    QRect m_chartRect;
     DataSet *m_dataset = nullptr;
 };
 
@@ -295,17 +301,20 @@ QSGNode *XYPlot::sgNode()
     return m_node;
 }
 
-void XYPlot::update(QQuickWindow *window, double w, double h, bool paused)
+void XYPlot::update(QQuickWindow *window, const QRect &chartRect, double devicePixelRatio, bool paused)
 {
     QMatrix4x4 m;
     const auto xa = xAxis();
     const auto ya = yAxis();
 
+    m_node->m_chartRect = QRect(chartRect.x() * devicePixelRatio, chartRect.y() * devicePixelRatio,
+                                chartRect.width() * devicePixelRatio, chartRect.height() * devicePixelRatio);
+
     const bool xinv = xa && xa->direction() == Axis::Direction::RightToLeft;
     const bool yinv = ya && ya->direction() == Axis::Direction::BottomToTop;
 
-    double xscale = xa ? (xinv ? -w : w) / (xa->max() - xa->min()) : 1;
-    double yscale = ya ? (yinv ? -h : h) / (ya->max() - ya->min()) : 1;
+    double xscale = xa ? (xinv ? -chartRect.width() : chartRect.width()) / (xa->max() - xa->min()) : 1;
+    double yscale = ya ? (yinv ? -chartRect.height() : chartRect.height()) / (ya->max() - ya->min()) : 1;
     m.scale(xscale, yscale);
 
     double xtr = xa ? (xinv ? -xa->max() : -xa->min()) : 0;

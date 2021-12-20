@@ -21,7 +21,7 @@ class Plot : public QObject, public QQmlParserStatus
 public:
 
     virtual QSGNode *sgNode() = 0;
-    virtual void update(QQuickWindow *window, double w, double h, bool paused) = 0;
+    virtual void update(QQuickWindow *window, const QRect &chartRect, double devicePixelRatio, bool paused) = 0;
 
     void setDataSet(DataSet *dataset);
     inline DataSet *dataSet() const { return m_dataset; }

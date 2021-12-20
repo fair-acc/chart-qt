@@ -382,8 +382,10 @@ QSGNode *ChartItem::updatePaintNode(QSGNode *node, UpdatePaintNodeData *)
     }
     m_plotsToInit.clear();
 
+    auto rect = mapRectToScene(QRectF(m_verticalMargin, m_horizontalMargin, width() - 2. * m_verticalMargin, height() - 2. * m_horizontalMargin)).toRect();
+
     for (auto p: m_plots) {
-        p->update(window(), width() - 2. * m_verticalMargin, height() - 2. * m_horizontalMargin, m_paused);
+        p->update(window(), rect, window()->effectiveDevicePixelRatio(), m_paused);
     }
 
     auto rectNode = static_cast<QSGRectangleNode *>(node->lastChild());

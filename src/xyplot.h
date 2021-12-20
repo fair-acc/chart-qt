@@ -11,7 +11,7 @@ class XYPlot : public Plot
 {
 public:
     QSGNode *sgNode() override;
-    void update(QQuickWindow *window, double w, double h, bool paused) override;
+    void update(QQuickWindow *window, const QRect &chartRect, double devicePixelRatio, bool paused) override;
 
 private:
     size_t m_allocated = 0;

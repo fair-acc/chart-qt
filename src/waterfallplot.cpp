@@ -296,13 +296,13 @@ QSGNode *WaterfallPlot::sgNode()
     return m_node;
 }
 
-void WaterfallPlot::update(QQuickWindow *window, double w, double h, bool paused)
+void WaterfallPlot::update(QQuickWindow *window, const QRect &chartRect, double devicePixelRatio, bool paused)
 {
     if (auto xa = xAxis()) {
         m_node->m_xaxis[0] = xa->min();
         m_node->m_xaxis[1] = xa->max();
     }
-    m_node->setWindow(window, QSize(w, h));
+    m_node->setWindow(window, chartRect.size());
     m_node->setGradient(m_gradientStart, m_gradientStop);
     if (m_needsUpdate && !paused) {
         m_needsUpdate = false;

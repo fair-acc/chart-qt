@@ -20,7 +20,7 @@ public:
     void setGradientStop(double g);
 
     QSGNode *sgNode() override;
-    void update(QQuickWindow *window, double w, double h, bool paused) override;
+    void update(QQuickWindow *window, const QRect &chartRect, double devicePixelRatio, bool paused) override;
 
 signals:
     void gradientChanged();
