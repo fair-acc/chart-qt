@@ -32,9 +32,12 @@ struct ChartItem::AxisLayout
                (!horiz && dir == Axis::Direction::BottomToTop);
     }
 
-    inline void zoom(double m)
+    inline void zoom(double m, double anchorPoint)
     {
-        axis->setMax((axis->max() - axis->min()) / m + axis->min());
+        double max = anchorPoint + (axis->max() - anchorPoint) / m;
+        double min = anchorPoint + (axis->min() - anchorPoint) / m;
+        axis->setMin(min);
+        axis->setMax(max);
     }
 
     Axis *axis;
@@ -401,9 +404,23 @@ void ChartItem::wheelEvent(QWheelEvent *evt)
         m = 1. / m;
     }
 
+    auto zoom = [&](AxisLayout *a) {
+        auto rect = axisRect(a->axis);
+        const auto p = a->axis->position();
+        const auto range = a->axis->max() - a->axis->min();
+        const bool horiz = p == Axis::Position::Top || p == Axis::Position::Bottom;
+        double anchor = horiz ? (evt->position().x() - rect.x() - m_verticalMargin) / (rect.width() - 2. * m_verticalMargin) * range :
+                                (evt->position().y() - rect.y() - m_horizontalMargin) / (rect.height() - 2. * m_horizontalMargin) * range;
+
+        if (a->isInverted()) {
+            anchor = range - anchor;
+        }
+        a->zoom(m, a->axis->min() + anchor);
+    };
+
     if (contentRect().contains(evt->position())) {
         for (auto &a: m_axes) {
-            a->zoom(m);
+            zoom(a.get());
         }
         return;
     }
@@ -411,7 +428,7 @@ void ChartItem::wheelEvent(QWheelEvent *evt)
     for (auto &a: m_axes) {
         auto p = a->axis->position();
         if (axisRect(a->axis).contains(evt->position())) {
-            a->zoom(m);
+            zoom(a.get());
         }
     }
 }
@@ -514,7 +531,7 @@ QRectF ChartItem::axisRect(Axis *axis) const
     auto p = axis->position();
     switch (p) {
         case Axis::Position::Bottom:
-            return QRectF(0, height() - m_verticalMargin, width(), m_verticalMargin);
+            return QRectF(0, height() - m_horizontalMargin, width(), m_horizontalMargin);
         case Axis::Position::Left:
             return QRectF(0, 0, m_verticalMargin, height());
         case Axis::Position::Top:

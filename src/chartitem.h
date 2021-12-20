@@ -9,7 +9,6 @@ namespace chart_qt {
 
 class Plot;
 class Axis;
-class AxisNode;
 
 class ChartItem : public QQuickItem
 {
@@ -63,7 +62,7 @@ private:
     double m_horizontalMargin = 30;
 
     struct AxisLayout;
-    struct AxisNode;
+    class AxisNode;
     std::vector<std::unique_ptr<AxisLayout>> m_axes;
     QPointF m_pressPos;
     bool m_panning: 1 = false;
