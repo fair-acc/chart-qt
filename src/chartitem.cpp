@@ -401,10 +401,7 @@ void ChartItem::wheelEvent(QWheelEvent *evt)
         m = 1. / m;
     }
 
-    const auto chartRect = QRectF(m_verticalMargin, m_horizontalMargin,
-                                  width() - 2. * m_verticalMargin,
-                                  height() - 2. * m_horizontalMargin);
-    if (chartRect.contains(evt->position())) {
+    if (contentRect().contains(evt->position())) {
         for (auto &a: m_axes) {
             a->zoom(m);
         }
@@ -413,31 +410,8 @@ void ChartItem::wheelEvent(QWheelEvent *evt)
 
     for (auto &a: m_axes) {
         auto p = a->axis->position();
-        switch (p) {
-            case Axis::Position::Bottom: {
-                if (QRectF(0, height() - m_verticalMargin, width(), m_verticalMargin).contains(evt->position())) {
-                    a->zoom(m);
-                }
-                break;
-            }
-            case Axis::Position::Left: {
-                if (QRectF(0, 0, m_verticalMargin, height()).contains(evt->position())) {
-                    a->zoom(m);
-                }
-                break;
-            }
-            case Axis::Position::Top: {
-                if (QRectF(0, 0, width(), m_horizontalMargin).contains(evt->position())) {
-                    a->zoom(m);
-                }
-                break;
-            }
-            case Axis::Position::Right: {
-                if (QRectF(width() - m_verticalMargin, 0, m_verticalMargin, height()).contains(evt->position())) {
-                    a->zoom(m);
-                }
-                break;
-            }
+        if (axisRect(a->axis).contains(evt->position())) {
+            a->zoom(m);
         }
     }
 }
@@ -447,7 +421,15 @@ void ChartItem::mousePressEvent(QMouseEvent *evt)
     m_pressPos = evt->position();
     switch (evt->button()) {
         case Qt::MiddleButton: {
-            m_panning = true;
+            if (contentRect().contains(evt->position())) {
+                for (auto &a: m_axes) {
+                    m_panningAxis.push_back(a.get());
+                }
+            } else for (auto &a: m_axes) {
+                if (axisRect(a->axis).contains(evt->position())) {
+                    m_panningAxis.push_back(a.get());
+                }
+            }
             break;
         }
         case Qt::LeftButton: {
@@ -465,12 +447,12 @@ void ChartItem::mousePressEvent(QMouseEvent *evt)
 
 void ChartItem::mouseMoveEvent(QMouseEvent *evt)
 {
-    auto dpos = evt->position() - m_pressPos;
-    const auto dx = dpos.x() / (width() - 2. * m_verticalMargin);
-    const auto dy = dpos.y() / (height() - 2. * m_horizontalMargin);
+    if (!m_panningAxis.empty()) {
+        auto dpos = evt->position() - m_pressPos;
+        const auto dx = dpos.x() / (width() - 2. * m_verticalMargin);
+        const auto dy = dpos.y() / (height() - 2. * m_horizontalMargin);
 
-    if (m_panning) {
-        for (auto &a: m_axes) {
+        for (auto *a: m_panningAxis) {
             const auto range = a->axis->max() - a->axis->min();
             const auto p = a->axis->position();
             double d = range * (p == Axis::Position::Top || p == Axis::Position::Bottom ? dx : dy);
@@ -494,7 +476,7 @@ void ChartItem::mouseReleaseEvent(QMouseEvent *evt)
 {
     switch (evt->button()) {
         case Qt::MiddleButton: {
-            m_panning = false;
+            m_panningAxis.clear();
             break;
         }
         case Qt::LeftButton: {
@@ -518,6 +500,29 @@ void ChartItem::mouseReleaseEvent(QMouseEvent *evt)
             break;
         }
     }
+}
+
+QRectF ChartItem::contentRect() const
+{
+    return QRectF(m_verticalMargin, m_horizontalMargin,
+                  width() - 2. * m_verticalMargin,
+                  height() - 2. * m_horizontalMargin);
+}
+
+QRectF ChartItem::axisRect(Axis *axis) const
+{
+    auto p = axis->position();
+    switch (p) {
+        case Axis::Position::Bottom:
+            return QRectF(0, height() - m_verticalMargin, width(), m_verticalMargin);
+        case Axis::Position::Left:
+            return QRectF(0, 0, m_verticalMargin, height());
+        case Axis::Position::Top:
+            return QRectF(0, 0, width(), m_horizontalMargin);
+        case Axis::Position::Right:
+            return QRectF(width() - m_verticalMargin, 0, m_verticalMargin, height());
+    }
+    return {};
 }
 
 void ChartItem::zoomIn(QRectF area)

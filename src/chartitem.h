@@ -32,6 +32,9 @@ public:
     Q_INVOKABLE void zoomIn(QRectF area);
     Q_INVOKABLE void zoomOut(QRectF area);
 
+    QRectF contentRect() const;
+    QRectF axisRect(Axis *axis) const;
+
     void componentComplete() override;
 
 protected:
@@ -65,6 +68,7 @@ private:
     QPointF m_pressPos;
     bool m_panning: 1 = false;
     bool m_drawingZoomSquare: 1 = false;
+    std::vector<AxisLayout *> m_panningAxis;
     QColor m_zoomRectColor = QColor(90, 200, 250, 150);
     QRectF m_zoomRect;
     std::stack<QRectF> m_zoomHistory;
