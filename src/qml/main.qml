@@ -100,6 +100,8 @@ ApplicationWindow {
         anchors.top: chart.bottom
         anchors.bottom: parent.bottom
 
+        Component.onCompleted: waterfall.addAxis(bottomAxis)
+
         WaterfallPlot {
             id: wf
 

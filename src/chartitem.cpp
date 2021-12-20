@@ -6,7 +6,9 @@
 #include <QSGGeometry>
 #include <QSGMaterial>
 #include <QSGMaterialShader>
+#include <QSGRectangleNode>
 #include <QLineF>
+#include <QQuickWindow>
 
 #include "plot.h"
 #include "sindataset.h"
@@ -144,7 +146,7 @@ ChartItem::ChartItem(QQuickItem *parent)
          : QQuickItem(parent)
 {
     setFlag(QQuickItem::ItemHasContents);
-    setAcceptedMouseButtons(Qt::LeftButton);
+    setAcceptedMouseButtons(Qt::LeftButton | Qt::RightButton | Qt::MiddleButton);
     setAcceptTouchEvents(true);
 
     // auto dataset = new SinDataSet;
@@ -193,6 +195,20 @@ void ChartItem::setPaused(bool p)
     if (m_paused != p) {
         m_paused = p;
         emit pausedChanged();
+    }
+}
+
+QColor ChartItem::zoomRectColor() const
+{
+    return m_zoomRectColor;
+}
+
+void ChartItem::setZoomRectColor(const QColor &c)
+{
+    if (m_zoomRectColor != c) {
+        m_zoomRectColor = c;
+        emit zoomRectColorChanged();
+        update();
     }
 }
 
@@ -345,12 +361,13 @@ QSGNode *ChartItem::updatePaintNode(QSGNode *node, UpdatePaintNodeData *)
     if (!node) {
         node = new QSGNode;
         node->appendChildNode(new QSGTransformNode);
+        node->appendChildNode(window()->createRectangleNode());
     }
 
     for (auto &a: m_axes) {
         if (!a->node) {
             a->node = new AxisNode(a.get());
-            node->appendChildNode(a->node);
+            node->insertChildNodeAfter(a->node, node->firstChild());
         }
         a->node->update();
     }
@@ -368,6 +385,10 @@ QSGNode *ChartItem::updatePaintNode(QSGNode *node, UpdatePaintNodeData *)
     for (auto p: m_plots) {
         p->update(window(), width() - 2. * m_verticalMargin, height() - 2. * m_horizontalMargin, m_paused);
     }
+
+    auto rectNode = static_cast<QSGRectangleNode *>(node->lastChild());
+    rectNode->setRect(m_zoomRect);
+    rectNode->setColor(m_zoomRectColor);
     return node;
 }
 
@@ -422,6 +443,21 @@ void ChartItem::wheelEvent(QWheelEvent *evt)
 void ChartItem::mousePressEvent(QMouseEvent *evt)
 {
     m_pressPos = evt->position();
+    switch (evt->button()) {
+        case Qt::MiddleButton: {
+            m_panning = true;
+            break;
+        }
+        case Qt::LeftButton: {
+            m_drawingZoomSquare = true;
+            m_zoomRect.setTopLeft(evt->position());
+            m_zoomRect.setSize({});
+            break;
+        }
+        default: {
+            break;
+        }
+    }
     evt->accept();
 }
 
@@ -431,19 +467,122 @@ void ChartItem::mouseMoveEvent(QMouseEvent *evt)
     const auto dx = dpos.x() / (width() - 2. * m_verticalMargin);
     const auto dy = dpos.y() / (height() - 2. * m_horizontalMargin);
 
+    if (m_panning) {
+        for (auto &a: m_axes) {
+            const auto range = a->axis->max() - a->axis->min();
+            const auto p = a->axis->position();
+            double d = range * (p == Axis::Position::Top || p == Axis::Position::Bottom ? dx : dy);
+
+            if (a->isInverted()) {
+                d = -d;
+            }
+
+            a->axis->setMin(a->axis->min() - d);
+            a->axis->setMax(a->axis->max() - d);
+        }
+        m_pressPos = evt->position();
+    }
+    if (m_drawingZoomSquare) {
+        m_zoomRect.setBottomRight(evt->position());
+        update();
+    }
+}
+
+void ChartItem::mouseReleaseEvent(QMouseEvent *evt)
+{
+    switch (evt->button()) {
+        case Qt::MiddleButton: {
+            m_panning = false;
+            break;
+        }
+        case Qt::LeftButton: {
+            m_zoomRect = sanitizeZoomRect(m_zoomRect);
+            zoomIn(m_zoomRect);
+            m_zoomHistory.push(m_zoomRect);
+
+            m_drawingZoomSquare = false;
+            m_zoomRect = {};
+            update();
+            break;
+        }
+        case Qt::RightButton: {
+            if (!m_zoomHistory.empty()) {
+                zoomOut(m_zoomHistory.top());
+                m_zoomHistory.pop();
+            }
+            break;
+        }
+        default: {
+            break;
+        }
+    }
+}
+
+void ChartItem::zoomIn(QRectF area)
+{
+    area = sanitizeZoomRect(area);
+    if (area.isEmpty()) {
+        return;
+    }
+
     for (auto &a: m_axes) {
         const auto range = a->axis->max() - a->axis->min();
         const auto p = a->axis->position();
-        double d = range * (p == Axis::Position::Top || p == Axis::Position::Bottom ? dx : dy);
 
+        const bool horiz = p == Axis::Position::Top || p == Axis::Position::Bottom;
+        const double fullPixelSize = horiz ? (width() - 2. * m_verticalMargin) : (height() - 2. * m_horizontalMargin);
+
+        double min = horiz ? area.x() - m_verticalMargin : area.y() - m_horizontalMargin;
+        double max = horiz ? area.right() - m_verticalMargin : area.bottom() - m_horizontalMargin;
         if (a->isInverted()) {
-            d = -d;
+            min = horiz ? width() - m_verticalMargin - area.right() : height() - m_horizontalMargin - area.bottom();
+            max = horiz ? width() - m_verticalMargin - area.x() : height() - m_horizontalMargin - area.y();
         }
 
-        a->axis->setMin(a->axis->min() - d);
-        a->axis->setMax(a->axis->max() - d);
+        a->axis->setMax(a->axis->min() + range * max / fullPixelSize);
+        a->axis->setMin(a->axis->min() + range * min / fullPixelSize);
     }
-    m_pressPos = evt->position();
+}
+
+void ChartItem::zoomOut(QRectF area)
+{
+    area = sanitizeZoomRect(area);
+    if (area.isEmpty()) {
+        return;
+    }
+
+    for (auto &a: m_axes) {
+        const auto range = a->axis->max() - a->axis->min();
+        const auto p = a->axis->position();
+
+        const bool horiz = p == Axis::Position::Top || p == Axis::Position::Bottom;
+        const double fullPixelSize = horiz ? area.width() : area.height();
+
+        double min = horiz ? -area.x() + m_verticalMargin : -area.y() + m_horizontalMargin;
+        double max = horiz ? width() - m_verticalMargin - area.x() : height() - 2. * m_horizontalMargin - area.y();
+        if (a->isInverted()) {
+            min = horiz ? m_horizontalMargin -(width() - area.right()) : m_horizontalMargin -(height() - area.bottom());
+            max = horiz ? 0 : area.bottom() - m_horizontalMargin;
+        }
+
+        a->axis->setMax(a->axis->min() + range * max / fullPixelSize);
+        a->axis->setMin(a->axis->min() + range * min / fullPixelSize);
+    }
+}
+
+QRectF ChartItem::sanitizeZoomRect(QRectF rect)
+{
+    if (rect.right() < rect.x()) {
+        double x = rect.right();
+        rect.setRight(rect.x());
+        rect.setX(x);
+    }
+    if (rect.bottom() < rect.y()) {
+        double y = rect.bottom();
+        rect.setBottom(rect.y());
+        rect.setY(y);
+    }
+    return rect;
 }
 
 }
