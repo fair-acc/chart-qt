@@ -435,18 +435,9 @@ void ChartItem::wheelEvent(QWheelEvent *evt)
 
 void ChartItem::mousePressEvent(QMouseEvent *evt)
 {
-    m_pressPos = evt->position();
     switch (evt->button()) {
         case Qt::MiddleButton: {
-            if (contentRect().contains(evt->position())) {
-                for (auto &a: m_axes) {
-                    m_panningAxis.push_back(a.get());
-                }
-            } else for (auto &a: m_axes) {
-                if (axisRect(a->axis).contains(evt->position())) {
-                    m_panningAxis.push_back(a.get());
-                }
-            }
+            startPanning(evt->position());
             break;
         }
         case Qt::LeftButton: {
@@ -465,23 +456,7 @@ void ChartItem::mousePressEvent(QMouseEvent *evt)
 void ChartItem::mouseMoveEvent(QMouseEvent *evt)
 {
     if (!m_panningAxis.empty()) {
-        auto dpos = evt->position() - m_pressPos;
-        const auto dx = dpos.x() / (width() - 2. * m_verticalMargin);
-        const auto dy = dpos.y() / (height() - 2. * m_horizontalMargin);
-
-        for (auto *a: m_panningAxis) {
-            const auto range = a->axis->max() - a->axis->min();
-            const auto p = a->axis->position();
-            double d = range * (p == Axis::Position::Top || p == Axis::Position::Bottom ? dx : dy);
-
-            if (a->isInverted()) {
-                d = -d;
-            }
-
-            a->axis->setMin(a->axis->min() - d);
-            a->axis->setMax(a->axis->max() - d);
-        }
-        m_pressPos = evt->position();
+        pan(evt->position());
     }
     if (m_drawingZoomSquare) {
         m_zoomRect.setBottomRight(evt->position());
@@ -517,6 +492,95 @@ void ChartItem::mouseReleaseEvent(QMouseEvent *evt)
             break;
         }
     }
+}
+
+void ChartItem::touchEvent(QTouchEvent *evt)
+{
+    if (evt->points().size() == 1) {
+        if (evt->isBeginEvent()) {
+            startPanning(evt->point(0).position());
+        } else if (evt->isEndEvent()) {
+            m_panningAxis.clear();
+        } else {
+            pan(evt->point(0).position());
+        }
+    } else {
+        m_panningAxis.clear();
+        if (evt->points().size() == 2) {
+            const auto &p0 = evt->point(0).position();
+            const auto &p1 = evt->point(1).position();
+            if (evt->isBeginEvent()) {
+                m_pinchPoints[0] = p0;
+                m_pinchPoints[1] = p1;
+            } else if (evt->isUpdateEvent()) {
+
+                auto center = (p0 + p1) / 2.;
+
+                QPointF m = { std::fabs(p0.x() - p1.x()) / std::fabs(m_pinchPoints[0].x() - m_pinchPoints[1].x()),
+                              std::fabs(p0.y() - p1.y()) / std::fabs(m_pinchPoints[0].y() - m_pinchPoints[1].y()) };
+
+                qDebug()<<center<<m;
+
+                for (auto &a: m_axes) {
+                    const auto p = a->axis->position();
+                    const bool horiz = p == Axis::Position::Top || p == Axis::Position::Bottom;
+
+                    auto f = horiz ? m.x() : m.y();
+                    if (f <= 0 || !std::isnormal(f)) {
+                        continue;
+                    }
+
+                    auto rect = axisRect(a->axis);
+                    const auto range = a->axis->max() - a->axis->min();
+                    double anchor = horiz ? (center.x() - rect.x() - m_verticalMargin) / (rect.width() - 2. * m_verticalMargin) * range :
+                                            (center.y() - rect.y() - m_horizontalMargin) / (rect.height() - 2. * m_horizontalMargin) * range;
+
+                    if (a->isInverted()) {
+                        anchor = range - anchor;
+                    }
+                    a->zoom(f, a->axis->min() + anchor);
+                }
+
+                m_pinchPoints[0] = p0;
+                m_pinchPoints[1] = p1;
+            }
+        }
+    }
+}
+
+void ChartItem::startPanning(const QPointF &pos)
+{
+    if (contentRect().contains(pos)) {
+        for (auto &a: m_axes) {
+            m_panningAxis.push_back(a.get());
+        }
+    } else for (auto &a: m_axes) {
+        if (axisRect(a->axis).contains(pos)) {
+            m_panningAxis.push_back(a.get());
+        }
+    }
+    m_pressPos = pos;
+}
+
+void ChartItem::pan(const QPointF &pos)
+{
+    auto dpos = pos - m_pressPos;
+    const auto dx = dpos.x() / (width() - 2. * m_verticalMargin);
+    const auto dy = dpos.y() / (height() - 2. * m_horizontalMargin);
+
+    for (auto *a: m_panningAxis) {
+        const auto range = a->axis->max() - a->axis->min();
+        const auto p = a->axis->position();
+        double d = range * (p == Axis::Position::Top || p == Axis::Position::Bottom ? dx : dy);
+
+        if (a->isInverted()) {
+            d = -d;
+        }
+
+        a->axis->setMin(a->axis->min() - d);
+        a->axis->setMax(a->axis->max() - d);
+    }
+    m_pressPos = pos;
 }
 
 QRectF ChartItem::contentRect() const

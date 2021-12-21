@@ -44,6 +44,7 @@ protected:
     void mousePressEvent(QMouseEvent *evt) override;
     void mouseMoveEvent(QMouseEvent *evt) override;
     void mouseReleaseEvent(QMouseEvent *evt) override;
+    void touchEvent(QTouchEvent *evt) override;
 
 signals:
     void pausedChanged();
@@ -53,6 +54,8 @@ private:
     void initPlots();
     void schedulePlotUpdate(Plot *plot);
     QRectF sanitizeZoomRect(QRectF rect);
+    void startPanning(const QPointF &pos);
+    void pan(const QPointF &pos);
 
     std::vector<Plot *> m_plots;
     std::vector<Plot *> m_plotsToInit;
@@ -71,6 +74,8 @@ private:
     QColor m_zoomRectColor = QColor(90, 200, 250, 150);
     QRectF m_zoomRect;
     std::stack<QRectF> m_zoomHistory;
+
+    QPointF m_pinchPoints[2];
 };
 
 }
