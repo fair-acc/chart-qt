@@ -7,6 +7,8 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
+namespace ExpertUi {
+
 NetworkModel::NetworkModel(QObject *parent)
     : QAbstractListModel{ parent } {
 #ifndef QT_NO_SSL
@@ -100,4 +102,6 @@ void NetworkModel::getFields() {
             endResetModel();
         }
     });
+}
+
 }

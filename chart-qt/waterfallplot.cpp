@@ -58,10 +58,10 @@ public:
                                     QRhiSampler::AddressMode::ClampToEdge, QRhiSampler::AddressMode::Repeat);
         m_sampler->create();
 
-        QFile vs_source(":/src/shaders/waterfall.vert.qsb");
+        QFile vs_source(":/shaders/waterfall.vert.qsb");
         vs_source.open(QIODevice::ReadOnly);
 
-        QFile fs_source(":/src/shaders/waterfall.frag.qsb");
+        QFile fs_source(":/shaders/waterfall.frag.qsb");
         fs_source.open(QIODevice::ReadOnly);
 
         QShader vshader = QShader::fromSerialized(vs_source.readAll());

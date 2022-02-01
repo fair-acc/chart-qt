@@ -1,5 +1,6 @@
 import QtQuick.Controls 2.3
 import ChartQt 1.0
+import ExpertUi 1.0
 import QtQuick 2.0
 
 ApplicationWindow {
@@ -23,6 +24,11 @@ ApplicationWindow {
         }
     }
 
+    SinDataSet
+    {
+        id: sinDataSet
+    }
+
     ChartItem {
         id: chart
         anchors.top: parent.top
@@ -35,6 +41,7 @@ ApplicationWindow {
             id: xy
             xAxis: bottomAxis
             yAxis: leftAxis
+            dataSet: sinDataSet
         }
 
         Axis {
@@ -109,6 +116,7 @@ ApplicationWindow {
             gradientStop: 1 - (topHandle.y + topHandle.height / 2) / chart.height
 
             xAxis: bottomAxis
+            dataSet: sinDataSet
         }
     }
 

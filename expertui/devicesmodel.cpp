@@ -7,6 +7,8 @@
 #include <QJsonObject>
 #include <QJsonArray>
 
+namespace ExpertUi {
+
 static constexpr auto url = "https://localhost:42042";
 
 DevicesModel::DevicesModel(QObject *parent)
@@ -59,3 +61,4 @@ void DevicesModel::addNewDevice(const QString &address)
     endInsertRows();
 }
 
+}

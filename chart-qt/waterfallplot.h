@@ -1,6 +1,8 @@
 #ifndef WATERFALLPLOT_H
 #define WATERFALLPLOT_H
 
+#include <QQmlEngine>
+
 #include "plot.h"
 
 namespace chart_qt {
@@ -10,7 +12,7 @@ class WaterfallPlot : public Plot
     Q_OBJECT
     Q_PROPERTY(double gradientStart READ gradientStart WRITE setGradientStart NOTIFY gradientChanged)
     Q_PROPERTY(double gradientStop READ gradientStop WRITE setGradientStop NOTIFY gradientChanged)
-
+    QML_ELEMENT
 public:
 
     double gradientStart() const;

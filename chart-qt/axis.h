@@ -20,6 +20,7 @@ class Axis : public QObject, public QQmlParserStatus
     Q_PROPERTY(Position position READ position WRITE setPosition NOTIFY positionChanged)
     Q_PROPERTY(Direction direction READ direction WRITE setDirection NOTIFY directionChanged)
     Q_PROPERTY(QQmlComponent *labelDelegate READ labelDelegate WRITE setLabelDelegate NOTIFY labelDelegateChanged)
+    QML_ELEMENT
 public:
     enum class Position
     {

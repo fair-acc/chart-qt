@@ -1,11 +1,11 @@
 #ifndef SINDATASET_H
 #define SINDATASET_H
 
-#include "dataset.h"
+#include <dataset.h>
 
-namespace chart_qt {
+namespace ExpertUi {
 
-class SinDataSet final : public DataSet
+class SinDataSet : public chart_qt::DataSet
 {
 public:
     SinDataSet();

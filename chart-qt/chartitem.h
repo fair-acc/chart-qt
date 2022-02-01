@@ -3,7 +3,10 @@
 
 #include <stack>
 
+#include <QQmlEngine>
 #include <QQuickItem>
+
+#include "plot.h"
 
 namespace chart_qt {
 
@@ -15,6 +18,7 @@ class ChartItem : public QQuickItem
     Q_OBJECT
     Q_PROPERTY(bool paused READ paused WRITE setPaused NOTIFY pausedChanged)
     Q_PROPERTY(QColor zoomRectColor READ zoomRectColor WRITE setZoomRectColor NOTIFY zoomRectColorChanged)
+    QML_ELEMENT
 public:
     ChartItem(QQuickItem *parent = nullptr);
     ~ChartItem();

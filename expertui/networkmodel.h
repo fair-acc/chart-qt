@@ -5,6 +5,8 @@
 #include <QQmlEngine>
 #include <QStringListModel>
 
+namespace ExpertUi {
+
 class NetworkModel : public QAbstractListModel {
     Q_OBJECT
     QML_ELEMENT
@@ -42,5 +44,7 @@ private:
     };
     std::vector<Field> m_fields;
 };
+
+}
 
 #endif // TESTNETWORKMODEL_H

@@ -63,10 +63,10 @@ public:
         m_ubuf = rhi->newBuffer(QRhiBuffer::Type::Dynamic, QRhiBuffer::UsageFlag::UniformBuffer, 16 * sizeof(float));
         m_ubuf->create();
 
-        QFile vs_source(":/src/shaders/xyplot_float.vert.qsb");
+        QFile vs_source(":/shaders/xyplot_float.vert.qsb");
         vs_source.open(QIODevice::ReadOnly);
 
-        QFile fs_source(":/src/shaders/xyplot_float.frag.qsb");
+        QFile fs_source(":/shaders/xyplot_float.frag.qsb");
         fs_source.open(QIODevice::ReadOnly);
 
         QShader vshader = QShader::fromSerialized(vs_source.readAll());
@@ -109,10 +109,10 @@ public:
         m_errorBarsBuffer = rhi->newBuffer(QRhiBuffer::Type::Dynamic, QRhiBuffer::UsageFlag::VertexBuffer, 2e6);
         m_errorBarsBuffer->create();
 
-        QFile vs_source(":/src/shaders/xyplot_errorbars.vert.qsb");
+        QFile vs_source(":/shaders/xyplot_errorbars.vert.qsb");
         vs_source.open(QIODevice::ReadOnly);
 
-        QFile fs_source(":/src/shaders/xyplot_errorbars.frag.qsb");
+        QFile fs_source(":/shaders/xyplot_errorbars.frag.qsb");
         fs_source.open(QIODevice::ReadOnly);
 
         QShader vshader = QShader::fromSerialized(vs_source.readAll());

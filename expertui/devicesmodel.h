@@ -5,6 +5,8 @@
 #include <QStringListModel>
 #include <QQmlEngine>
 
+namespace ExpertUi {
+
 class DevicesModel : public QAbstractListModel
 {
     Q_OBJECT
@@ -33,5 +35,7 @@ private:
     };
     std::vector<Device> m_devices;
 };
+
+}
 
 #endif // TESTNETWORKMODEL_H

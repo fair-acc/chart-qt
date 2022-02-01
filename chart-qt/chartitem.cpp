@@ -11,7 +11,6 @@
 #include <QQuickWindow>
 
 #include "plot.h"
-#include "sindataset.h"
 #include "xyplot.h"
 #include "axis.h"
 
@@ -57,8 +56,8 @@ public:
     public:
         Shader()
         {
-            setShaderFileName(VertexStage, QLatin1String(":/src/shaders/axismaterial.vert.qsb"));
-            setShaderFileName(FragmentStage, QLatin1String(":/src/shaders/axismaterial.frag.qsb"));
+            setShaderFileName(VertexStage, QLatin1String(":/shaders/axismaterial.vert.qsb"));
+            setShaderFileName(FragmentStage, QLatin1String(":/shaders/axismaterial.frag.qsb"));
         }
 
         bool updateUniformData(RenderState &state, QSGMaterial *, QSGMaterial *)
@@ -151,17 +150,6 @@ ChartItem::ChartItem(QQuickItem *parent)
     setFlag(QQuickItem::ItemHasContents);
     setAcceptedMouseButtons(Qt::LeftButton | Qt::RightButton | Qt::MiddleButton);
     setAcceptTouchEvents(true);
-
-    // auto dataset = new SinDataSet;
-    // auto plot = new XYPlot;
-    // plot->setDataSet(dataset);
-    // addPlot(plot);
-}
-
-static SinDataSet *dataset()
-{
-    static SinDataSet ds;
-    return &ds;
 }
 
 ChartItem::~ChartItem()
@@ -171,8 +159,6 @@ ChartItem::~ChartItem()
 
 void ChartItem::addPlot(Plot *plot)
 {
-    plot->setDataSet(dataset());
-
     m_plotsToInit.push_back(plot);
     m_plots.push_back(plot);
 

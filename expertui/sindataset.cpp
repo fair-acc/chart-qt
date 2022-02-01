@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-namespace chart_qt
+namespace ExpertUi
 {
 
 SinDataSet::SinDataSet()

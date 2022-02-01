@@ -18,6 +18,7 @@ class Plot : public QObject, public QQmlParserStatus
     Q_INTERFACES(QQmlParserStatus)
     Q_PROPERTY(Axis *xAxis READ xAxis WRITE setXAxis NOTIFY xAxisChanged)
     Q_PROPERTY(Axis *yAxis READ yAxis WRITE setYAxis NOTIFY yAxisChanged)
+    Q_PROPERTY(DataSet *dataSet READ dataSet WRITE setDataSet NOTIFY dataSetChanged)
 public:
 
     virtual QSGNode *sgNode() = 0;
