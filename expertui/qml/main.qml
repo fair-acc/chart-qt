@@ -37,6 +37,8 @@ ApplicationWindow {
         anchors.bottom: parent.verticalCenter
         clip: true
 
+        DefaultChartInputHandler {}
+
         XYPlot {
             id: xy
             xAxis: bottomAxis

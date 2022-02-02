@@ -128,6 +128,20 @@ QQuickItem *Axis::createLabel()
     return obj;
 }
 
+void Axis::zoom(double m, double anchorPoint)
+{
+    double max = anchorPoint + (m_max - anchorPoint) / m;
+    double min = anchorPoint + (m_min - anchorPoint) / m;
+    setMin(min);
+    setMax(max);
+}
+
+bool Axis::isRightToLeftOrBottomToTop() const
+{
+    const bool horiz = m_position == Axis::Position::Top || m_position == Axis::Position::Bottom;
+    return (horiz && m_direction == Axis::Direction::RightToLeft) ||
+            (!horiz && m_direction == Axis::Direction::BottomToTop);
+}
 
 
 }

@@ -17,7 +17,6 @@ class ChartItem : public QQuickItem
 {
     Q_OBJECT
     Q_PROPERTY(bool paused READ paused WRITE setPaused NOTIFY pausedChanged)
-    Q_PROPERTY(QColor zoomRectColor READ zoomRectColor WRITE setZoomRectColor NOTIFY zoomRectColorChanged)
     QML_ELEMENT
 public:
     ChartItem(QQuickItem *parent = nullptr);
@@ -29,14 +28,19 @@ public:
     bool paused() const;
     void setPaused(bool paused);
 
-    QColor zoomRectColor() const;
-    void setZoomRectColor(const QColor &c);
 
     Q_INVOKABLE void zoomIn(QRectF area);
     Q_INVOKABLE void zoomOut(QRectF area);
+    Q_INVOKABLE void undoZoom();
 
     QRectF contentRect() const;
     QRectF axisRect(Axis *axis) const;
+
+    const std::vector<Axis *> &axes() const;
+    int topMargin() const;
+    int leftMargin() const;
+    int rightMargin() const;
+    int bottomMargin() const;
 
     void componentComplete() override;
 
@@ -44,22 +48,14 @@ protected:
     void geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry) override;
     void updatePolish() override;
     QSGNode *updatePaintNode(QSGNode *node, UpdatePaintNodeData *data) override;
-    void wheelEvent(QWheelEvent *evt) override;
-    void mousePressEvent(QMouseEvent *evt) override;
-    void mouseMoveEvent(QMouseEvent *evt) override;
-    void mouseReleaseEvent(QMouseEvent *evt) override;
-    void touchEvent(QTouchEvent *evt) override;
 
 signals:
     void pausedChanged();
-    void zoomRectColorChanged();
 
 private:
     void initPlots();
     void schedulePlotUpdate(Plot *plot);
     QRectF sanitizeZoomRect(QRectF rect);
-    void startPanning(const QPointF &pos);
-    void pan(const QPointF &pos);
 
     std::vector<Plot *> m_plots;
     std::vector<Plot *> m_plotsToInit;
@@ -71,15 +67,8 @@ private:
     struct AxisLayout;
     class AxisNode;
     std::vector<std::unique_ptr<AxisLayout>> m_axes;
-    QPointF m_pressPos;
-    bool m_panning: 1 = false;
-    bool m_drawingZoomSquare: 1 = false;
-    std::vector<AxisLayout *> m_panningAxis;
-    QColor m_zoomRectColor = QColor(90, 200, 250, 150);
-    QRectF m_zoomRect;
+    std::vector<Axis *> m_addedAxes;
     std::stack<QRectF> m_zoomHistory;
-
-    QPointF m_pinchPoints[2];
 };
 
 }

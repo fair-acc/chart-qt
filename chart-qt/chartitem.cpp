@@ -31,14 +31,6 @@ struct ChartItem::AxisLayout
                (!horiz && dir == Axis::Direction::BottomToTop);
     }
 
-    inline void zoom(double m, double anchorPoint)
-    {
-        double max = anchorPoint + (axis->max() - anchorPoint) / m;
-        double min = anchorPoint + (axis->min() - anchorPoint) / m;
-        axis->setMin(min);
-        axis->setMax(max);
-    }
-
     Axis *axis;
     AxisNode *node = nullptr;
     std::vector<QQuickItem *> labels;
@@ -170,6 +162,7 @@ void ChartItem::addPlot(Plot *plot)
 void ChartItem::addAxis(Axis *axis)
 {
     m_axes.push_back(std::make_unique<AxisLayout>(axis));
+    m_addedAxes.push_back(axis);
     connect(axis, &Axis::minChanged, this, &QQuickItem::polish);
     connect(axis, &Axis::maxChanged, this, &QQuickItem::polish);
 }
@@ -187,18 +180,29 @@ void ChartItem::setPaused(bool p)
     }
 }
 
-QColor ChartItem::zoomRectColor() const
+const std::vector<Axis *> &ChartItem::axes() const
 {
-    return m_zoomRectColor;
+    return m_addedAxes;
 }
 
-void ChartItem::setZoomRectColor(const QColor &c)
+int ChartItem::topMargin() const
 {
-    if (m_zoomRectColor != c) {
-        m_zoomRectColor = c;
-        emit zoomRectColorChanged();
-        update();
-    }
+    return m_horizontalMargin;
+}
+
+int ChartItem::leftMargin() const
+{
+    return m_verticalMargin;
+}
+
+int ChartItem::rightMargin() const
+{
+    return m_verticalMargin;
+}
+
+int ChartItem::bottomMargin() const
+{
+    return m_horizontalMargin;
 }
 
 void ChartItem::componentComplete()
@@ -376,197 +380,7 @@ QSGNode *ChartItem::updatePaintNode(QSGNode *node, UpdatePaintNodeData *)
     for (auto p: m_plots) {
         p->update(window(), rect, window()->effectiveDevicePixelRatio(), m_paused);
     }
-
-    auto rectNode = static_cast<QSGRectangleNode *>(node->lastChild());
-    rectNode->setRect(m_zoomRect);
-    rectNode->setColor(m_zoomRectColor);
     return node;
-}
-
-void ChartItem::wheelEvent(QWheelEvent *evt)
-{
-    double m = 1.1;
-    if (evt->angleDelta().y() < 0) {
-        m = 1. / m;
-    }
-
-    auto zoom = [&](AxisLayout *a) {
-        auto rect = axisRect(a->axis);
-        const auto p = a->axis->position();
-        const auto range = a->axis->max() - a->axis->min();
-        const bool horiz = p == Axis::Position::Top || p == Axis::Position::Bottom;
-        double anchor = horiz ? (evt->position().x() - rect.x() - m_verticalMargin) / (rect.width() - 2. * m_verticalMargin) * range :
-                                (evt->position().y() - rect.y() - m_horizontalMargin) / (rect.height() - 2. * m_horizontalMargin) * range;
-
-        if (a->isInverted()) {
-            anchor = range - anchor;
-        }
-        a->zoom(m, a->axis->min() + anchor);
-    };
-
-    if (contentRect().contains(evt->position())) {
-        for (auto &a: m_axes) {
-            zoom(a.get());
-        }
-        return;
-    }
-
-    for (auto &a: m_axes) {
-        auto p = a->axis->position();
-        if (axisRect(a->axis).contains(evt->position())) {
-            zoom(a.get());
-        }
-    }
-}
-
-void ChartItem::mousePressEvent(QMouseEvent *evt)
-{
-    switch (evt->button()) {
-        case Qt::MiddleButton: {
-            startPanning(evt->position());
-            break;
-        }
-        case Qt::LeftButton: {
-            m_drawingZoomSquare = true;
-            m_zoomRect.setTopLeft(evt->position());
-            m_zoomRect.setSize({});
-            break;
-        }
-        default: {
-            break;
-        }
-    }
-    evt->accept();
-}
-
-void ChartItem::mouseMoveEvent(QMouseEvent *evt)
-{
-    if (!m_panningAxis.empty()) {
-        pan(evt->position());
-    }
-    if (m_drawingZoomSquare) {
-        m_zoomRect.setBottomRight(evt->position());
-        update();
-    }
-}
-
-void ChartItem::mouseReleaseEvent(QMouseEvent *evt)
-{
-    switch (evt->button()) {
-        case Qt::MiddleButton: {
-            m_panningAxis.clear();
-            break;
-        }
-        case Qt::LeftButton: {
-            m_zoomRect = sanitizeZoomRect(m_zoomRect);
-            zoomIn(m_zoomRect);
-            m_zoomHistory.push(m_zoomRect);
-
-            m_drawingZoomSquare = false;
-            m_zoomRect = {};
-            update();
-            break;
-        }
-        case Qt::RightButton: {
-            if (!m_zoomHistory.empty()) {
-                zoomOut(m_zoomHistory.top());
-                m_zoomHistory.pop();
-            }
-            break;
-        }
-        default: {
-            break;
-        }
-    }
-}
-
-void ChartItem::touchEvent(QTouchEvent *evt)
-{
-    if (evt->points().size() == 1) {
-        if (evt->isBeginEvent()) {
-            startPanning(evt->point(0).position());
-        } else if (evt->isEndEvent()) {
-            m_panningAxis.clear();
-        } else {
-            pan(evt->point(0).position());
-        }
-    } else {
-        m_panningAxis.clear();
-        if (evt->points().size() == 2) {
-            const auto &p0 = evt->point(0).position();
-            const auto &p1 = evt->point(1).position();
-            if (evt->isBeginEvent()) {
-                m_pinchPoints[0] = p0;
-                m_pinchPoints[1] = p1;
-            } else if (evt->isUpdateEvent()) {
-
-                auto center = (p0 + p1) / 2.;
-
-                QPointF m = { std::fabs(p0.x() - p1.x()) / std::fabs(m_pinchPoints[0].x() - m_pinchPoints[1].x()),
-                              std::fabs(p0.y() - p1.y()) / std::fabs(m_pinchPoints[0].y() - m_pinchPoints[1].y()) };
-
-                qDebug()<<center<<m;
-
-                for (auto &a: m_axes) {
-                    const auto p = a->axis->position();
-                    const bool horiz = p == Axis::Position::Top || p == Axis::Position::Bottom;
-
-                    auto f = horiz ? m.x() : m.y();
-                    if (f <= 0 || !std::isnormal(f)) {
-                        continue;
-                    }
-
-                    auto rect = axisRect(a->axis);
-                    const auto range = a->axis->max() - a->axis->min();
-                    double anchor = horiz ? (center.x() - rect.x() - m_verticalMargin) / (rect.width() - 2. * m_verticalMargin) * range :
-                                            (center.y() - rect.y() - m_horizontalMargin) / (rect.height() - 2. * m_horizontalMargin) * range;
-
-                    if (a->isInverted()) {
-                        anchor = range - anchor;
-                    }
-                    a->zoom(f, a->axis->min() + anchor);
-                }
-
-                m_pinchPoints[0] = p0;
-                m_pinchPoints[1] = p1;
-            }
-        }
-    }
-}
-
-void ChartItem::startPanning(const QPointF &pos)
-{
-    if (contentRect().contains(pos)) {
-        for (auto &a: m_axes) {
-            m_panningAxis.push_back(a.get());
-        }
-    } else for (auto &a: m_axes) {
-        if (axisRect(a->axis).contains(pos)) {
-            m_panningAxis.push_back(a.get());
-        }
-    }
-    m_pressPos = pos;
-}
-
-void ChartItem::pan(const QPointF &pos)
-{
-    auto dpos = pos - m_pressPos;
-    const auto dx = dpos.x() / (width() - 2. * m_verticalMargin);
-    const auto dy = dpos.y() / (height() - 2. * m_horizontalMargin);
-
-    for (auto *a: m_panningAxis) {
-        const auto range = a->axis->max() - a->axis->min();
-        const auto p = a->axis->position();
-        double d = range * (p == Axis::Position::Top || p == Axis::Position::Bottom ? dx : dy);
-
-        if (a->isInverted()) {
-            d = -d;
-        }
-
-        a->axis->setMin(a->axis->min() - d);
-        a->axis->setMax(a->axis->max() - d);
-    }
-    m_pressPos = pos;
 }
 
 QRectF ChartItem::contentRect() const
@@ -616,6 +430,8 @@ void ChartItem::zoomIn(QRectF area)
         a->axis->setMax(a->axis->min() + range * max / fullPixelSize);
         a->axis->setMin(a->axis->min() + range * min / fullPixelSize);
     }
+
+    m_zoomHistory.push(area);
 }
 
 void ChartItem::zoomOut(QRectF area)
@@ -641,6 +457,14 @@ void ChartItem::zoomOut(QRectF area)
 
         a->axis->setMax(a->axis->min() + range * max / fullPixelSize);
         a->axis->setMin(a->axis->min() + range * min / fullPixelSize);
+    }
+}
+
+void ChartItem::undoZoom()
+{
+    if (!m_zoomHistory.empty()) {
+        zoomOut(m_zoomHistory.top());
+        m_zoomHistory.pop();
     }
 }
 

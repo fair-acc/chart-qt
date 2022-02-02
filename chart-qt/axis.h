@@ -62,6 +62,10 @@ public:
 
     QQuickItem *createLabel();
 
+    Q_INVOKABLE void zoom(double factor, double anchorPoint);
+
+    bool isRightToLeftOrBottomToTop() const;
+
 signals:
     void minChanged();
     void maxChanged();
