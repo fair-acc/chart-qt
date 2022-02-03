@@ -59,6 +59,13 @@ ApplicationWindow {
             max: 1
         }
 
+        Axis {
+            id: leftAxis1
+            position: Axis.Left
+            min: 0
+            max: 10
+        }
+
         MouseArea {
             id: topHandle
             width: 20

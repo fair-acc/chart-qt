@@ -33,6 +33,7 @@ struct ChartItem::AxisLayout
 
     Axis *axis;
     AxisNode *node = nullptr;
+    QRectF rect;
     std::vector<QQuickItem *> labels;
     QLineF axisLine;
     std::vector<QLineF> majorLines;
@@ -220,6 +221,32 @@ void ChartItem::geometryChange(const QRectF &newGeometry, const QRectF &oldGeome
 
 void ChartItem::updatePolish()
 {
+    int leftMargin = 0;
+    int rightMargin = 0;
+    int topMargin = 0;
+    int bottomMargin = 0;
+
+    for (auto &a: m_axes) {
+        switch (a->axis->position()) {
+            case Axis::Position::Left:
+                a->rect = QRectF(leftMargin, 0, m_verticalMargin, height());
+                leftMargin += m_verticalMargin;
+                break;
+            case Axis::Position::Right:
+                a->rect = QRectF(width() - rightMargin - m_verticalMargin, 0, m_verticalMargin, height());
+                rightMargin += m_verticalMargin;
+                break;
+            case Axis::Position::Top:
+                a->rect = QRectF(0, topMargin, width(), m_horizontalMargin);
+                topMargin += m_horizontalMargin;
+                break;
+            case Axis::Position::Bottom:
+                a->rect = QRectF(0, height() - bottomMargin - m_horizontalMargin, width(), m_horizontalMargin);
+                bottomMargin += m_horizontalMargin;
+                break;
+        }
+    }
+
     for (auto &a: m_axes) {
         auto getLabel = [&](int idx) {
             if (a->labels.size() > idx) {
@@ -270,11 +297,13 @@ void ChartItem::updatePolish()
         int labelIndex = 0;
         const int tickLength = (axisPos == Axis::Position::Bottom || axisPos == Axis::Position::Right) ? 10 : -10;
 
+        auto rect = contentRect();
+
         // round to int to get a sharper line
-        const double basePos = axisPos == Axis::Position::Bottom ? qRound(height() - m_horizontalMargin) :
-                               (axisPos == Axis::Position::Right ? qRound(width() - m_verticalMargin) :
-                               (horiz ? m_horizontalMargin : m_verticalMargin));
-        const double linesOffset = (horiz ? m_verticalMargin : m_horizontalMargin);
+        const double basePos = axisPos == Axis::Position::Bottom ? a->rect.top() :
+                               (axisPos == Axis::Position::Right ? a->rect.left() :
+                               (horiz ? a->rect.bottom() : a->rect.right()));
+        const double linesOffset = (horiz ? rect.left() : rect.top());
 
         if (horiz) {
             a->axisLine = { 0., basePos, width(), basePos };
@@ -375,7 +404,8 @@ QSGNode *ChartItem::updatePaintNode(QSGNode *node, UpdatePaintNodeData *)
     }
     m_plotsToInit.clear();
 
-    auto rect = mapRectToScene(QRectF(m_verticalMargin, m_horizontalMargin, width() - 2. * m_verticalMargin, height() - 2. * m_horizontalMargin)).toRect();
+    auto crect = contentRect();
+    auto rect = mapRectToScene(crect).toRect();
 
     for (auto p: m_plots) {
         p->update(window(), rect, window()->effectiveDevicePixelRatio(), m_paused);
@@ -385,23 +415,35 @@ QSGNode *ChartItem::updatePaintNode(QSGNode *node, UpdatePaintNodeData *)
 
 QRectF ChartItem::contentRect() const
 {
-    return QRectF(m_verticalMargin, m_horizontalMargin,
-                  width() - 2. * m_verticalMargin,
-                  height() - 2. * m_horizontalMargin);
+    int leftMargin = 0;
+    int rightMargin = 0;
+    int topMargin = 0;
+    int bottomMargin = 0;
+    for (auto &a: m_axes) {
+        switch (a->axis->position()) {
+            case Axis::Position::Left:
+                leftMargin += a->rect.width();
+                break;
+            case Axis::Position::Right:
+                rightMargin += a->rect.width();
+                break;
+            case Axis::Position::Top:
+                topMargin += a->rect.height();
+                break;
+            case Axis::Position::Bottom:
+                bottomMargin += a->rect.height();
+                break;
+        }
+    }
+    return QRectF(leftMargin, topMargin, width() - leftMargin - rightMargin, height() - topMargin - bottomMargin);
 }
 
 QRectF ChartItem::axisRect(Axis *axis) const
 {
-    auto p = axis->position();
-    switch (p) {
-        case Axis::Position::Bottom:
-            return QRectF(0, height() - m_horizontalMargin, width(), m_horizontalMargin);
-        case Axis::Position::Left:
-            return QRectF(0, 0, m_verticalMargin, height());
-        case Axis::Position::Top:
-            return QRectF(0, 0, width(), m_horizontalMargin);
-        case Axis::Position::Right:
-            return QRectF(width() - m_verticalMargin, 0, m_verticalMargin, height());
+    for (auto &a: m_axes) {
+        if (a->axis == axis) {
+            return a->rect;
+        }
     }
     return {};
 }
