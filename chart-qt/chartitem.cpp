@@ -18,8 +18,9 @@ namespace chart_qt {
 
 struct ChartItem::AxisLayout
 {
-    explicit AxisLayout(Axis *a)
-        : axis(a)
+    explicit AxisLayout(ChartItem *chart, Axis *a)
+        : chartItem(chart)
+        , axis(a)
     {}
 
     bool isInverted() const
@@ -31,6 +32,25 @@ struct ChartItem::AxisLayout
                (!horiz && dir == Axis::Direction::BottomToTop);
     }
 
+    QQuickItem *getLabel(int idx)
+    {
+        if (labels.size() > idx) {
+            return labels[idx];
+        }
+        while (labels.size() <= idx) {
+            auto l = axis->createLabel();
+            l->setParentItem(chartItem);
+            labels.push_back(l);
+        }
+        return labels[idx];
+    };
+
+    void setLabelValue(QQuickItem *label, double value)
+    {
+        label->setProperty("text", QString::number(value, 'f', 2));
+    }
+
+    ChartItem *chartItem;
     Axis *axis;
     AxisNode *node = nullptr;
     QRectF rect;
@@ -162,7 +182,7 @@ void ChartItem::addPlot(Plot *plot)
 
 void ChartItem::addAxis(Axis *axis)
 {
-    m_axes.push_back(std::make_unique<AxisLayout>(axis));
+    m_axes.push_back(std::make_unique<AxisLayout>(this, axis));
     m_addedAxes.push_back(axis);
     connect(axis, &Axis::minChanged, this, &QQuickItem::polish);
     connect(axis, &Axis::maxChanged, this, &QQuickItem::polish);
@@ -186,26 +206,6 @@ const std::vector<Axis *> &ChartItem::axes() const
     return m_addedAxes;
 }
 
-int ChartItem::topMargin() const
-{
-    return m_horizontalMargin;
-}
-
-int ChartItem::leftMargin() const
-{
-    return m_verticalMargin;
-}
-
-int ChartItem::rightMargin() const
-{
-    return m_verticalMargin;
-}
-
-int ChartItem::bottomMargin() const
-{
-    return m_horizontalMargin;
-}
-
 void ChartItem::componentComplete()
 {
     QQuickItem::componentComplete();
@@ -227,42 +227,43 @@ void ChartItem::updatePolish()
     int bottomMargin = 0;
 
     for (auto &a: m_axes) {
+        for (auto l: a->labels) {
+            l->setVisible(false);
+        }
+
+        const auto axisPos = a->axis->position();
+        const bool horiz = axisPos == Axis::Position::Top || axisPos == Axis::Position::Bottom;
+
+        auto l = a->getLabel(0);
+        a->setLabelValue(l, a->axis->min());
+        double w = horiz ? l->implicitHeight() : l->implicitWidth();
+        a->setLabelValue(l, a->axis->max());
+        w = std::max(w, horiz ? l->implicitHeight() : l->implicitWidth());
+        w += 20;
+
         switch (a->axis->position()) {
-            case Axis::Position::Left:
-                a->rect = QRectF(leftMargin, 0, m_verticalMargin, height());
-                leftMargin += m_verticalMargin;
+            case Axis::Position::Left: {
+                a->rect = QRectF(leftMargin, 0, w, height());
+                leftMargin += w;
                 break;
+            }
             case Axis::Position::Right:
-                a->rect = QRectF(width() - rightMargin - m_verticalMargin, 0, m_verticalMargin, height());
-                rightMargin += m_verticalMargin;
+                a->rect = QRectF(width() - rightMargin - w, 0, w, height());
+                rightMargin += w;
                 break;
             case Axis::Position::Top:
-                a->rect = QRectF(0, topMargin, width(), m_horizontalMargin);
-                topMargin += m_horizontalMargin;
+                a->rect = QRectF(0, topMargin, width(), w);
+                topMargin += w;
                 break;
             case Axis::Position::Bottom:
-                a->rect = QRectF(0, height() - bottomMargin - m_horizontalMargin, width(), m_horizontalMargin);
-                bottomMargin += m_horizontalMargin;
+                a->rect = QRectF(0, height() - bottomMargin - w, width(), w);
+                bottomMargin += w;
                 break;
         }
     }
 
     for (auto &a: m_axes) {
-        auto getLabel = [&](int idx) {
-            if (a->labels.size() > idx) {
-                return a->labels[idx];
-            }
-            while (a->labels.size() <= idx) {
-                auto l = a->axis->createLabel();
-                l->setParentItem(this);
-                a->labels.push_back(l);
-            }
-            return a->labels[idx];
-        };
 
-        for (auto l: a->labels) {
-            l->setVisible(false);
-        }
 
         const auto findSubdivision = [](double range) {
             const double multiplier = pow(10, floor(log10(range)));
@@ -283,7 +284,9 @@ void ChartItem::updatePolish()
         const bool horiz = axisPos == Axis::Position::Top || axisPos == Axis::Position::Bottom;
         const bool inverted = a->isInverted();
 
-        const double pixelSize = horiz ? width() - 2. * m_verticalMargin : height() - 2. * m_horizontalMargin;
+        auto rect = contentRect();
+
+        const double pixelSize = horiz ? rect.width() : rect.height();
 
         const double majorLinesLogicalDistance = findSubdivision(range / pixelSize);
         const double minorLinesLogicalDistance = majorLinesLogicalDistance / 10.;
@@ -296,8 +299,6 @@ void ChartItem::updatePolish()
 
         int labelIndex = 0;
         const int tickLength = (axisPos == Axis::Position::Bottom || axisPos == Axis::Position::Right) ? 10 : -10;
-
-        auto rect = contentRect();
 
         // round to int to get a sharper line
         const double basePos = axisPos == Axis::Position::Bottom ? a->rect.top() :
@@ -328,12 +329,12 @@ void ChartItem::updatePolish()
         double lineValue = visibleMin - fmod(visibleMin, majorLinesLogicalDistance) - majorLinesLogicalDistance;
         double linePos = (lineValue - min) * logicalToPixel + linesOffset;
         if (inverted) {
-            linePos = (horiz ? width() : height()) - linePos;
+            linePos = (horiz ? rect.right() : rect.bottom()) - linePos;
         }
         const auto keepGoing = [&]() { return inverted ? linePos >= 0 : linePos <= endPos; };
         while (keepGoing()) {
-            auto label = getLabel(++labelIndex);
-            label->setProperty("text", QString::number(lineValue, 'f', 2));
+            auto label = a->getLabel(++labelIndex);
+            a->setLabelValue(label, lineValue);
             placeLabel(label, linePos);
 
             const double pos = qRound(linePos);
@@ -358,8 +359,8 @@ void ChartItem::updatePolish()
                 }
 
                 if (minorLine++ == 4) {
-                    auto label = getLabel(++labelIndex);
-                    label->setProperty("text", QString::number(minorLineValue, 'f', 2));
+                    auto label = a->getLabel(++labelIndex);
+                    a->setLabelValue(label, minorLineValue);
 
                     // check if the label would fit, otherwise don't show it
                     const double neededSpace = horiz ? label->implicitWidth() : label->implicitHeight();
@@ -394,8 +395,10 @@ QSGNode *ChartItem::updatePaintNode(QSGNode *node, UpdatePaintNodeData *)
         a->node->update();
     }
 
+    auto crect = contentRect();
+
     QMatrix4x4 matrix;
-    matrix.translate(m_verticalMargin, m_horizontalMargin);
+    matrix.translate(crect.left(), crect.top());
     auto plotsParentNode = node->firstChild();
     static_cast<QSGTransformNode *>(plotsParentNode)->setMatrix(matrix);
 
@@ -404,7 +407,6 @@ QSGNode *ChartItem::updatePaintNode(QSGNode *node, UpdatePaintNodeData *)
     }
     m_plotsToInit.clear();
 
-    auto crect = contentRect();
     auto rect = mapRectToScene(crect).toRect();
 
     for (auto p: m_plots) {

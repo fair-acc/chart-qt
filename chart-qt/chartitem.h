@@ -37,10 +37,6 @@ public:
     QRectF axisRect(Axis *axis) const;
 
     const std::vector<Axis *> &axes() const;
-    int topMargin() const;
-    int leftMargin() const;
-    int rightMargin() const;
-    int bottomMargin() const;
 
     void componentComplete() override;
 

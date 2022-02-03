@@ -95,8 +95,9 @@ void DefaultChartInputHandler::wheelEvent(QWheelEvent *evt)
         const auto p = axis->position();
         const auto range = axis->max() - axis->min();
         const bool horiz = p == Axis::Position::Top || p == Axis::Position::Bottom;
-        double anchor = horiz ? (evt->position().x() - rect.x() - c->topMargin()) / (rect.width() - c->topMargin() - c->bottomMargin()) * range :
-                                (evt->position().y() - rect.y() - c->leftMargin()) / (rect.height() - c->leftMargin() - c->rightMargin()) * range;
+        auto crect = c->contentRect();
+        double anchor = horiz ? (evt->position().x() - rect.x() - crect.x()) / crect.width() * range :
+                                (evt->position().y() - rect.y() - crect.y()) / crect.height() * range;
 
         if (axis->isRightToLeftOrBottomToTop()) {
             anchor = range - anchor;
@@ -211,6 +212,7 @@ void DefaultChartInputHandler::touchEvent(QTouchEvent *evt)
                               std::fabs(p0.y() - p1.y()) / std::fabs(m_pinchPoints[0].y() - m_pinchPoints[1].y()) };
 
                 auto c = chartItem();
+                auto crect = c->contentRect();
                 for (auto &a: c->axes()) {
                     const auto p = a->position();
                     const bool horiz = p == Axis::Position::Top || p == Axis::Position::Bottom;
@@ -222,10 +224,8 @@ void DefaultChartInputHandler::touchEvent(QTouchEvent *evt)
 
                     auto rect = c->axisRect(a);
                     const auto range = a->max() - a->min();
-                    double anchor = horiz ? (center.x() - rect.x() - c->leftMargin()) /
-                                                (rect.width() - c->leftMargin() - c->rightMargin()) * range :
-                                            (center.y() - rect.y() - c->topMargin()) /
-                                                (rect.height() - c->topMargin() - c->bottomMargin()) * range;
+                    double anchor = horiz ? (center.x() - rect.x() - crect.x()) / crect.width() * range :
+                                            (center.y() - rect.y() - crect.y()) / crect.height() * range;
 
                     if (a->isRightToLeftOrBottomToTop()) {
                         anchor = range - anchor;
