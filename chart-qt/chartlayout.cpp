@@ -22,6 +22,8 @@ QQmlListProperty<ChartItem> ChartLayout::charts()
         layout->m_charts.push_back(chart);
         chart->setParentItem(layout);
         layout->polish();
+
+        connect(chart, &ChartItem::implicitContentRectChanged, layout, &QQuickItem::polish);
     };
     QQmlListProperty<ChartItem>::CountFunction count = [](QQmlListProperty<ChartItem> *list) -> qsizetype {
         auto layout = static_cast<ChartLayout *>(list->object);

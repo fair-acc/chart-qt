@@ -49,11 +49,13 @@ protected:
 
 signals:
     void pausedChanged();
+    void implicitContentRectChanged();
 
 private:
     void initPlots();
     void schedulePlotUpdate(Plot *plot);
     QRectF sanitizeZoomRect(QRectF rect);
+    void updateAxesRect();
 
     std::vector<Plot *> m_plots;
     std::vector<Plot *> m_plotsToInit;

@@ -23,13 +23,10 @@ struct ChartItem::AxisLayout
         , axis(a)
     {}
 
-    bool isInverted() const
+    bool isHorizontal() const
     {
         const auto pos = axis->position();
-        const auto dir = axis->direction();
-        const bool horiz = pos == Axis::Position::Top || pos == Axis::Position::Bottom;
-        return (horiz && dir == Axis::Direction::RightToLeft) ||
-               (!horiz && dir == Axis::Direction::BottomToTop);
+        return pos == Axis::Position::Top || pos == Axis::Position::Bottom;
     }
 
     QQuickItem *getLabel(int idx)
@@ -59,6 +56,7 @@ struct ChartItem::AxisLayout
     std::vector<QLineF> majorLines;
     std::vector<QLineF> minorLines;
     bool needsUpdate = false;
+    bool dirty = true;
 };
 
 class ChartItem::AxisNode final : public QSGGeometryNode
@@ -184,8 +182,16 @@ void ChartItem::addAxis(Axis *axis)
 {
     m_axes.push_back(std::make_unique<AxisLayout>(this, axis));
     m_addedAxes.push_back(axis);
-    connect(axis, &Axis::minChanged, this, &QQuickItem::polish);
-    connect(axis, &Axis::maxChanged, this, &QQuickItem::polish);
+    auto a = m_axes.back().get();
+    connect(axis, &Axis::minChanged, this, [this, a]() {
+        a->dirty = true;
+        polish();
+    });
+    connect(axis, &Axis::maxChanged, this, [this, a]() {
+        a->dirty = true;
+        polish();
+    });
+    polish();
 }
 
 bool ChartItem::paused() const
@@ -215,38 +221,63 @@ void ChartItem::componentComplete()
 void ChartItem::geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry)
 {
     QQuickItem::geometryChange(newGeometry, oldGeometry);
+
+    const bool wchanged = newGeometry.width() != oldGeometry.width();
+    const bool hchanged = newGeometry.height() != oldGeometry.height();
+    for (auto &a: m_axes) {
+        bool h = a->isHorizontal();
+        if ((h && wchanged) || (!h && hchanged)) {
+            a->dirty = true;
+        }
+    }
+
     polish();
     update();
 }
 
-void ChartItem::updatePolish()
+void ChartItem::updateAxesRect()
 {
     int leftMargin = 0;
     int rightMargin = 0;
     int topMargin = 0;
     int bottomMargin = 0;
 
+    bool crectChanged = false;
     for (auto &a: m_axes) {
-        for (auto l: a->labels) {
-            l->setVisible(false);
+        double w;
+        if (a->dirty) {
+            crectChanged = true;
+            a->dirty = false;
+
+            for (auto l: a->labels) {
+                l->setVisible(false);
+            }
+
+            const bool horiz = a->isHorizontal();
+
+            auto l = a->getLabel(0);
+            a->setLabelValue(l, a->axis->min());
+            w = horiz ? l->implicitHeight() : l->implicitWidth();
+            a->setLabelValue(l, a->axis->max());
+            w = std::max(w, horiz ? l->implicitHeight() : l->implicitWidth());
+            w += 20;
+        } else {
+            w = [&]() {
+                switch (a->axis->position()) {
+                    case Axis::Position::Left:
+                    case Axis::Position::Right: return a->rect.width();
+                    case Axis::Position::Top:
+                    case Axis::Position::Bottom: return a->rect.height();
+                }
+                return 0.;
+            }();
         }
 
-        const auto axisPos = a->axis->position();
-        const bool horiz = axisPos == Axis::Position::Top || axisPos == Axis::Position::Bottom;
-
-        auto l = a->getLabel(0);
-        a->setLabelValue(l, a->axis->min());
-        double w = horiz ? l->implicitHeight() : l->implicitWidth();
-        a->setLabelValue(l, a->axis->max());
-        w = std::max(w, horiz ? l->implicitHeight() : l->implicitWidth());
-        w += 20;
-
         switch (a->axis->position()) {
-            case Axis::Position::Left: {
+            case Axis::Position::Left:
                 a->rect = QRectF(leftMargin, 0, w, height());
                 leftMargin += w;
                 break;
-            }
             case Axis::Position::Right:
                 a->rect = QRectF(width() - rightMargin - w, 0, w, height());
                 rightMargin += w;
@@ -261,7 +292,14 @@ void ChartItem::updatePolish()
                 break;
         }
     }
+    if (crectChanged) {
+        emit implicitContentRectChanged();
+    }
+}
 
+void ChartItem::updatePolish()
+{
+    updateAxesRect();
     for (auto &a: m_axes) {
         const auto findSubdivision = [](double range) {
             const double multiplier = pow(10, floor(log10(range)));
@@ -280,7 +318,7 @@ void ChartItem::updatePolish()
 
         const auto axisPos = a->axis->position();
         const bool horiz = axisPos == Axis::Position::Top || axisPos == Axis::Position::Bottom;
-        const bool inverted = a->isInverted();
+        const bool inverted = a->axis->isRightToLeftOrBottomToTop();
 
         auto rect = contentRect();
 
@@ -297,6 +335,7 @@ void ChartItem::updatePolish()
 
         int labelIndex = 0;
         const int tickLength = (axisPos == Axis::Position::Bottom || axisPos == Axis::Position::Right) ? 10 : -10;
+        const int minorTickLength = float(tickLength) * 0.6;
 
         // round to int to get a sharper line
         const double basePos = std::round(axisPos == Axis::Position::Bottom ? a->rect.top() :
@@ -326,13 +365,20 @@ void ChartItem::updatePolish()
         const double endPos = (horiz ? rect.right() : rect.bottom());
         const double startPos = horiz ? rect.left() : rect.top();
 
-        double lineValue = visibleMin - fmod(visibleMin, majorLinesLogicalDistance) - majorLinesLogicalDistance;
-        double linePos = (lineValue - min) * logicalToPixel + linesOffset;
+        double startLineValue = visibleMin - fmod(visibleMin, majorLinesLogicalDistance) - majorLinesLogicalDistance;
+        double startLinePos = (startLineValue - min) * logicalToPixel + linesOffset;
         if (inverted) {
-            linePos = (horiz ? width() : rect.bottom()) - linePos;
+            startLinePos = (horiz ? width() : rect.bottom()) - startLinePos;
         }
         const auto keepGoing = [&](double p) { return inverted ? p >= startPos : p <= endPos; };
-        while (keepGoing(linePos)) {
+        for (int majorLine = 0;; ++majorLine) {
+            double linePos = startLinePos + majorLinesPixelDistance * majorLine;
+            double lineValue = startLineValue + majorLinesLogicalDistance * majorLine;
+
+            if (!keepGoing(linePos)) {
+                break;
+            }
+
             if (inverted ? linePos <= endPos : linePos >= startPos) {
                 auto label = a->getLabel(++labelIndex);
                 a->setLabelValue(label, lineValue);
@@ -340,30 +386,28 @@ void ChartItem::updatePolish()
 
                 const double pos = std::round(linePos);
                 if (horiz) {
-                    a->majorLines.push_back(QLineF{ pos, std::round(axisPos == Axis::Position::Bottom ? 0. : height()),
-                                                    pos, basePos + tickLength });
+                    a->majorLines.push_back(QLineF{ pos, std::round(axisPos == Axis::Position::Bottom ? rect.top() : rect.bottom()),
+                                                    pos, basePos });
                 } else {
-                    a->majorLines.push_back(QLineF{ std::round(axisPos == Axis::Position::Right ? 0. : width()), pos,
-                                                    basePos + tickLength, pos });
+                    a->majorLines.push_back(QLineF{ std::round(axisPos == Axis::Position::Right ? rect.left() : rect.right()), pos,
+                                                    basePos, pos });
                 }
             }
 
-            double minorLineValue = lineValue + minorLinesLogicalDistance;
-            double minorLinePos = linePos + minorLinesPixelDistance;
-            lineValue += majorLinesLogicalDistance;
-            linePos += majorLinesPixelDistance;
+            for (int minorLine = 0; minorLine < 10; ++minorLine) {
+                double minorLineValue = lineValue + minorLinesLogicalDistance * minorLine;
+                double minorLinePos = linePos + minorLinesPixelDistance * minorLine;
 
-            int minorLine = 0;
-            while (minorLineValue < lineValue && keepGoing(minorLinePos)) {
                 const double pos = std::round(minorLinePos);
                 if (inverted ? pos <= endPos : pos >= startPos) {
+                    auto tl = (minorLine == 5 || minorLine == 0) ? tickLength : minorTickLength;
                     if (horiz) {
-                        a->minorLines.push_back(QLineF{ pos, basePos, pos, basePos + tickLength });
+                        a->minorLines.push_back(QLineF{ pos, basePos, pos, basePos + tl });
                     } else {
-                        a->minorLines.push_back(QLineF{ basePos, pos, basePos + tickLength, pos });
+                        a->minorLines.push_back(QLineF{ basePos, pos, basePos + tl, pos });
                     }
 
-                    if (minorLine == 4) {
+                    if (minorLine == 5) {
                         auto label = a->getLabel(++labelIndex);
                         a->setLabelValue(label, minorLineValue);
 
@@ -376,10 +420,6 @@ void ChartItem::updatePolish()
                         }
                     }
                 }
-
-                ++minorLine;
-                minorLineValue += minorLinesLogicalDistance;
-                minorLinePos += minorLinesPixelDistance;
             }
         }
         a->needsUpdate = true;
@@ -476,14 +516,13 @@ void ChartItem::zoomIn(QRectF area)
 
     for (auto &a: m_axes) {
         const auto range = a->axis->max() - a->axis->min();
-        const auto p = a->axis->position();
+        const bool horiz = a->isHorizontal();
 
-        const bool horiz = p == Axis::Position::Top || p == Axis::Position::Bottom;
         const double fullPixelSize = horiz ? (width() - 2. * m_verticalMargin) : (height() - 2. * m_horizontalMargin);
 
         double min = horiz ? area.x() - m_verticalMargin : area.y() - m_horizontalMargin;
         double max = horiz ? area.right() - m_verticalMargin : area.bottom() - m_horizontalMargin;
-        if (a->isInverted()) {
+        if (a->axis->isRightToLeftOrBottomToTop()) {
             min = horiz ? width() - m_verticalMargin - area.right() : height() - m_horizontalMargin - area.bottom();
             max = horiz ? width() - m_verticalMargin - area.x() : height() - m_horizontalMargin - area.y();
         }
@@ -510,14 +549,12 @@ void ChartItem::zoomOut(QRectF area)
 
     for (auto &a: m_axes) {
         const auto range = a->axis->max() - a->axis->min();
-        const auto p = a->axis->position();
-
-        const bool horiz = p == Axis::Position::Top || p == Axis::Position::Bottom;
+        const bool horiz = a->isHorizontal();
         const double fullPixelSize = horiz ? area.width() : area.height();
 
         double min = horiz ? -area.x() + m_verticalMargin : -area.y() + m_horizontalMargin;
         double max = horiz ? width() - m_verticalMargin - area.x() : height() - 2. * m_horizontalMargin - area.y();
-        if (a->isInverted()) {
+        if (a->axis->isRightToLeftOrBottomToTop()) {
             min = horiz ? m_horizontalMargin -(width() - area.right()) : m_horizontalMargin -(height() - area.bottom());
             max = horiz ? 0 : area.bottom() - m_horizontalMargin;
         }
