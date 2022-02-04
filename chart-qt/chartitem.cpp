@@ -263,8 +263,6 @@ void ChartItem::updatePolish()
     }
 
     for (auto &a: m_axes) {
-
-
         const auto findSubdivision = [](double range) {
             const double multiplier = pow(10, floor(log10(range)));
             double firstDigit = trunc(range / multiplier);
@@ -301,47 +299,53 @@ void ChartItem::updatePolish()
         const int tickLength = (axisPos == Axis::Position::Bottom || axisPos == Axis::Position::Right) ? 10 : -10;
 
         // round to int to get a sharper line
-        const double basePos = axisPos == Axis::Position::Bottom ? a->rect.top() :
-                               (axisPos == Axis::Position::Right ? a->rect.left() :
-                               (horiz ? a->rect.bottom() : a->rect.right()));
+        const double basePos = std::round(axisPos == Axis::Position::Bottom ? a->rect.top() :
+                                          (axisPos == Axis::Position::Right ? a->rect.left() :
+                                          (horiz ? a->rect.bottom() : a->rect.right())));
         const double linesOffset = (horiz ? rect.left() : rect.top());
 
         if (horiz) {
-            a->axisLine = { 0., basePos, width(), basePos };
+            a->axisLine = { std::round(rect.left()), basePos, std::round(rect.right()), basePos };
         } else {
-            a->axisLine = { basePos, 0., basePos, height() };
+            a->axisLine = { basePos, std::round(rect.top()), basePos, std::round(rect.bottom()) };
         }
 
         auto placeLabel = [&](QQuickItem *label, double linePos) {
             if (horiz) {
-                label->setX(qRound(linePos - label->implicitWidth() / 2.));
-                label->setY(basePos + tickLength - (axisPos == Axis::Position::Top ? label->implicitHeight() : 0));
+                label->setX(std::round(linePos - label->implicitWidth() / 2.));
+                label->setY(std::round(basePos + tickLength - (axisPos == Axis::Position::Top ? label->implicitHeight() : 0)));
             } else {
-                label->setY(qRound(linePos - label->implicitHeight() / 2));
-                label->setX(basePos + tickLength - (axisPos == Axis::Position::Left ? label->implicitWidth() : 0));
+                label->setY(std::round(linePos - label->implicitHeight() / 2));
+                label->setX(std::round(basePos + tickLength - (axisPos == Axis::Position::Left ? label->implicitWidth() : 0)));
             }
             label->setVisible(true);
         };
 
         // 'min' is not actually the minimum visible value, due to the margins
         const double visibleMin = min - linesOffset / logicalToPixel;
-        const double endPos = (horiz ? width() : height());
+        const double endPos = (horiz ? rect.right() : rect.bottom());
+        const double startPos = horiz ? rect.left() : rect.top();
+
         double lineValue = visibleMin - fmod(visibleMin, majorLinesLogicalDistance) - majorLinesLogicalDistance;
         double linePos = (lineValue - min) * logicalToPixel + linesOffset;
         if (inverted) {
-            linePos = (horiz ? rect.right() : rect.bottom()) - linePos;
+            linePos = (horiz ? width() : rect.bottom()) - linePos;
         }
-        const auto keepGoing = [&]() { return inverted ? linePos >= 0 : linePos <= endPos; };
-        while (keepGoing()) {
-            auto label = a->getLabel(++labelIndex);
-            a->setLabelValue(label, lineValue);
-            placeLabel(label, linePos);
+        const auto keepGoing = [&](double p) { return inverted ? p >= startPos : p <= endPos; };
+        while (keepGoing(linePos)) {
+            if (inverted ? linePos <= endPos : linePos >= startPos) {
+                auto label = a->getLabel(++labelIndex);
+                a->setLabelValue(label, lineValue);
+                placeLabel(label, linePos);
 
-            const double pos = qRound(linePos);
-            if (horiz) {
-                a->majorLines.push_back(QLineF{ pos, (axisPos == Axis::Position::Bottom ? 0. : height()), pos, basePos + tickLength });
-            } else {
-                a->majorLines.push_back(QLineF{ (axisPos == Axis::Position::Right ? 0. : width()), pos, basePos + tickLength, pos });
+                const double pos = std::round(linePos);
+                if (horiz) {
+                    a->majorLines.push_back(QLineF{ pos, std::round(axisPos == Axis::Position::Bottom ? 0. : height()),
+                                                    pos, basePos + tickLength });
+                } else {
+                    a->majorLines.push_back(QLineF{ std::round(axisPos == Axis::Position::Right ? 0. : width()), pos,
+                                                    basePos + tickLength, pos });
+                }
             }
 
             double minorLineValue = lineValue + minorLinesLogicalDistance;
@@ -350,27 +354,30 @@ void ChartItem::updatePolish()
             linePos += majorLinesPixelDistance;
 
             int minorLine = 0;
-            while (minorLineValue < lineValue) {
-                const double pos = qRound(minorLinePos);
-                if (horiz) {
-                    a->minorLines.push_back(QLineF{ pos, basePos, pos, basePos + tickLength });
-                } else {
-                    a->minorLines.push_back(QLineF{ basePos, pos, basePos + tickLength, pos });
-                }
-
-                if (minorLine++ == 4) {
-                    auto label = a->getLabel(++labelIndex);
-                    a->setLabelValue(label, minorLineValue);
-
-                    // check if the label would fit, otherwise don't show it
-                    const double neededSpace = horiz ? label->implicitWidth() : label->implicitHeight();
-                    if (fabs(majorLinesPixelDistance) > neededSpace * 2.5) {
-                        placeLabel(label, minorLinePos);
+            while (minorLineValue < lineValue && keepGoing(minorLinePos)) {
+                const double pos = std::round(minorLinePos);
+                if (inverted ? pos <= endPos : pos >= startPos) {
+                    if (horiz) {
+                        a->minorLines.push_back(QLineF{ pos, basePos, pos, basePos + tickLength });
                     } else {
-                        --labelIndex;
+                        a->minorLines.push_back(QLineF{ basePos, pos, basePos + tickLength, pos });
+                    }
+
+                    if (minorLine == 4) {
+                        auto label = a->getLabel(++labelIndex);
+                        a->setLabelValue(label, minorLineValue);
+
+                        // check if the label would fit, otherwise don't show it
+                        const double neededSpace = horiz ? label->implicitWidth() : label->implicitHeight();
+                        if (fabs(majorLinesPixelDistance) > neededSpace * 2.5) {
+                            placeLabel(label, minorLinePos);
+                        } else {
+                            --labelIndex;
+                        }
                     }
                 }
 
+                ++minorLine;
                 minorLineValue += minorLinesLogicalDistance;
                 minorLinePos += minorLinesPixelDistance;
             }
