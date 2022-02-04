@@ -8,6 +8,7 @@ set(SOURCES chartitem.cpp
             xyplot.cpp
             waterfallplot.cpp
             defaultchartinputhandler.cpp
+            chartlayout.cpp
             )
 
 qt_add_library(chart-qt ${SOURCES})

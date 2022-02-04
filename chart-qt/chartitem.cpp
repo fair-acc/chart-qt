@@ -417,6 +417,16 @@ QSGNode *ChartItem::updatePaintNode(QSGNode *node, UpdatePaintNodeData *)
 
 QRectF ChartItem::contentRect() const
 {
+    auto crect = implicitContentRect();
+    if (!m_minimumMargins.isNull()) {
+        auto r = QRectF(0, 0, width(), height()).marginsRemoved(m_minimumMargins);
+        return crect.intersected(r);
+    }
+    return crect;
+}
+
+QRectF ChartItem::implicitContentRect() const
+{
     int leftMargin = 0;
     int rightMargin = 0;
     int topMargin = 0;
@@ -476,6 +486,12 @@ void ChartItem::zoomIn(QRectF area)
     }
 
     m_zoomHistory.push(area);
+}
+
+void ChartItem::setMinimumContentMargins(const QMarginsF &margins)
+{
+    m_minimumMargins = margins;
+    polish();
 }
 
 void ChartItem::zoomOut(QRectF area)

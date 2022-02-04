@@ -28,13 +28,15 @@ public:
     bool paused() const;
     void setPaused(bool paused);
 
-
     Q_INVOKABLE void zoomIn(QRectF area);
     Q_INVOKABLE void zoomOut(QRectF area);
     Q_INVOKABLE void undoZoom();
 
+    QRectF implicitContentRect() const;
     QRectF contentRect() const;
     QRectF axisRect(Axis *axis) const;
+
+    void setMinimumContentMargins(const QMarginsF &margins);
 
     const std::vector<Axis *> &axes() const;
 
@@ -65,6 +67,7 @@ private:
     std::vector<std::unique_ptr<AxisLayout>> m_axes;
     std::vector<Axis *> m_addedAxes;
     std::stack<QRectF> m_zoomHistory;
+    QMarginsF m_minimumMargins;
 };
 
 }

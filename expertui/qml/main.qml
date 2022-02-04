@@ -29,103 +29,108 @@ ApplicationWindow {
         id: sinDataSet
     }
 
-    ChartItem {
-        id: chart
+    ChartLayout {
         anchors.top: parent.top
         anchors.left: fields.right
         anchors.right: parent.right
-        anchors.bottom: parent.verticalCenter
-        clip: true
-
-        DefaultChartInputHandler {}
-
-        XYPlot {
-            id: xy
-            xAxis: bottomAxis
-            yAxis: leftAxis
-            dataSet: sinDataSet
-        }
-
-        Axis {
-            id: bottomAxis
-            position: Axis.Bottom
-            max: 10
-        }
-
-        Axis {
-            id: leftAxis
-            position: Axis.Left
-            min: -1
-            max: 1
-        }
-
-        Axis {
-            id: leftAxis1
-            position: Axis.Left
-            min: 0
-            max: 10
-        }
-
-        MouseArea {
-            id: topHandle
-            width: 20
-            height: 10
-            anchors.right: parent.right
-            y: parent.height * 0.2 - height / 2
-            cursorShape: Qt.SizeVerCursor
-
-            property real pressY
-            onPressed: (mouse) => pressY = mouse.y
-            onPositionChanged: (mouse) => {
-                y += mouse.y - pressY
-            }
-        }
-
-        MouseArea {
-            id: bottomHandle
-            width: 20
-            anchors.right: parent.right
-            cursorShape: Qt.SizeVerCursor
-            y: parent.height * 0.8 - height / 2
-            height: 10
-
-            property real pressY
-            onPressed: (mouse) => pressY = mouse.y
-            onPositionChanged: (mouse) => {
-                y += mouse.y - pressY
-            }
-        }
-
-        Rectangle {
-            anchors.right: parent.right
-            width: 20
-            anchors.top: topHandle.verticalCenter
-            anchors.bottom: bottomHandle.verticalCenter
-
-
-            gradient: Gradient {
-                GradientStop { position: 0.0; color: "green" }
-                GradientStop { position: 1.0; color: "red" }
-            }
-        }
-    }
-    ChartItem {
-        id: waterfall
-        anchors.left: fields.right
-        anchors.right: parent.right
-        anchors.top: chart.bottom
         anchors.bottom: parent.bottom
+        orientation: Qt.Vertical
 
-        Component.onCompleted: waterfall.addAxis(bottomAxis)
+        ChartItem {
+            id: chart
+            clip: true
 
-        WaterfallPlot {
-            id: wf
+            DefaultChartInputHandler {}
 
-            gradientStart: 1 - (bottomHandle.y + bottomHandle.height / 2) / chart.height
-            gradientStop: 1 - (topHandle.y + topHandle.height / 2) / chart.height
+            XYPlot {
+                id: xy
+                xAxis: bottomAxis
+                yAxis: leftAxis
+                dataSet: sinDataSet
+            }
 
-            xAxis: bottomAxis
-            dataSet: sinDataSet
+            Axis {
+                id: bottomAxis
+                position: Axis.Bottom
+                max: 10
+            }
+
+            Axis {
+                id: leftAxis
+                position: Axis.Left
+                min: -1
+                max: 1
+            }
+
+            Axis {
+                id: leftAxis1
+                position: Axis.Left
+                min: 0
+                max: 10
+            }
+
+            MouseArea {
+                id: topHandle
+                width: 20
+                height: 10
+                anchors.right: parent.right
+                y: parent.height * 0.2 - height / 2
+                cursorShape: Qt.SizeVerCursor
+
+                property real pressY
+                onPressed: (mouse) => pressY = mouse.y
+                onPositionChanged: (mouse) => {
+                    y += mouse.y - pressY
+                }
+            }
+
+            MouseArea {
+                id: bottomHandle
+                width: 20
+                anchors.right: parent.right
+                cursorShape: Qt.SizeVerCursor
+                y: parent.height * 0.8 - height / 2
+                height: 10
+
+                property real pressY
+                onPressed: (mouse) => pressY = mouse.y
+                onPositionChanged: (mouse) => {
+                    y += mouse.y - pressY
+                }
+            }
+
+            Rectangle {
+                anchors.right: parent.right
+                width: 20
+                anchors.top: topHandle.verticalCenter
+                anchors.bottom: bottomHandle.verticalCenter
+
+
+                gradient: Gradient {
+                    GradientStop { position: 0.0; color: "green" }
+                    GradientStop { position: 1.0; color: "red" }
+                }
+            }
+        }
+        ChartItem {
+            id: waterfall
+
+            Component.onCompleted: waterfall.addAxis(bottomAxis)
+                Axis {
+                position: Axis.Right
+                min: 0
+                max: 10
+            }
+
+            WaterfallPlot {
+                id: wf
+
+                gradientStart: 1 - (bottomHandle.y + bottomHandle.height / 2) / chart.height
+                gradientStop: 1 - (topHandle.y + topHandle.height / 2) / chart.height
+
+                xAxis: bottomAxis
+                dataSet: sinDataSet
+            }
         }
     }
 
