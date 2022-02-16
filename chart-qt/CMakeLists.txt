@@ -10,7 +10,9 @@ include(ExternalProject)
 ExternalProject_Add(pipegen
                     SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/pipegen
                     BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/pipegen
-                    INSTALL_COMMAND "")
+                    INSTALL_COMMAND ""
+                    CMAKE_ARGS
+                        "-DCMAKE_PREFIX_PATH=${QT_HOST_PATH}")
 
 # This shaders library is to make sure the shaders get compiled before
 # the pipegen tool needs them
