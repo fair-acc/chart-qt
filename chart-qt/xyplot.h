@@ -14,12 +14,15 @@ class XYPlot : public Plot
     Q_OBJECT
     QML_ELEMENT
 public:
-    QSGNode *sgNode() override;
+    XYPlot();
     void update(QQuickWindow *window, const QRect &chartRect, double devicePixelRatio, bool paused) override;
 
+    PlotRenderer *renderer() override;
+
 private:
+    class XYRenderer;
     size_t m_allocated = 0;
-    Node *m_node = nullptr;
+    XYRenderer *m_renderer = nullptr;
 };
 
 }

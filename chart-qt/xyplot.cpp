@@ -11,158 +11,43 @@
 #include <QFile>
 #include <QQuickWindow>
 
-#include <QSGRendererInterface>
-#include <private/qrhi_p.h>
-
-#ifndef WASM
-#include <QOpenGLVersionFunctionsFactory>
-#include <QOpenGLFunctions_4_1_Core>
-#endif // WASM
-
 #include "dataset.h"
 #include "axis.h"
+#include "renderutils.h"
+#include "xyplotpipeline.h"
+#include "errorbarspipeline.h"
 
 namespace chart_qt {
 
-class Node : public QSGRenderNode
+class XYPlot::XYRenderer final : public PlotRenderer
 {
 public:
-    Node()
-    {
-    }
-
-    QRhiRenderPassDescriptor *renderPassDescriptor() const
-    {
-        auto ri = m_window->rendererInterface();
-        auto swapchain = static_cast<QRhiSwapChain *>(ri->getResource(m_window,
-                                                                      QSGRendererInterface::RhiSwapchainResource));
-        if (swapchain) {
-            return swapchain->renderPassDescriptor();
-        }
-
-        auto target = static_cast<QRhiRenderTarget *>(ri->getResource(m_window,
-                                                                      QSGRendererInterface::RhiRedirectRenderTarget));
-        return target->renderPassDescriptor();
-    }
-
     void init()
     {
-        auto ri = m_window->rendererInterface();
-        auto rhi = static_cast<QRhi *>(ri->getResource(m_window, QSGRendererInterface::RhiResource));
+        m_pipeline.setTopology(Pipeline::Topology::LineStrip);
+        m_pipeline.create(this);
 
-        m_pipeline = rhi->newGraphicsPipeline();
+        m_xBuffer = createBuffer<XYPlotPipeline::Vx>(BufferBase::Type::Dynamic, BufferBase::UsageFlag::VertexBuffer, 1e6);
+        m_yBuffer = createBuffer<XYPlotPipeline::Vy>(BufferBase::Type::Dynamic, BufferBase::UsageFlag::VertexBuffer, 1e6);
+        m_ubuf = createBuffer<XYPlotPipeline::Ubo>(BufferBase::Type::Dynamic, BufferBase::UsageFlag::UniformBuffer);
 
-        m_pipeline->setTopology(QRhiGraphicsPipeline::Topology::LineStrip);
+        m_bindingSet = m_pipeline.createBindingSet(this, XYPlotPipeline::Bindings {
+            .ubuf = m_ubuf
+        });
 
-        m_xbuffer = rhi->newBuffer(QRhiBuffer::Type::Dynamic, QRhiBuffer::UsageFlag::VertexBuffer, 1e6);
-        m_xbuffer->create();
-
-        m_ybuffer = rhi->newBuffer(QRhiBuffer::Type::Dynamic, QRhiBuffer::UsageFlag::VertexBuffer, 1e6);
-        m_ybuffer->create();
-
-        m_ubuf = rhi->newBuffer(QRhiBuffer::Type::Dynamic, QRhiBuffer::UsageFlag::UniformBuffer, 16 * sizeof(float));
-        m_ubuf->create();
-
-        QFile vs_source(":/shaders/xyplot_float.vert.qsb");
-        vs_source.open(QIODevice::ReadOnly);
-
-        QFile fs_source(":/shaders/xyplot_float.frag.qsb");
-        fs_source.open(QIODevice::ReadOnly);
-
-        QShader vshader = QShader::fromSerialized(vs_source.readAll());
-        QShader fshader = QShader::fromSerialized(fs_source.readAll());
-
-        m_pipeline->setShaderStages({ { QRhiShaderStage::Type::Vertex, vshader }, { QRhiShaderStage::Type::Fragment, fshader } });
-        m_pipeline->setRenderPassDescriptor(renderPassDescriptor());
-        m_pipeline->setFlags(QRhiGraphicsPipeline::Flag::UsesScissor);
-
-        m_resourceBindings = rhi->newShaderResourceBindings();
-        const auto uniforms = vshader.description().uniformBlocks();
-        std::vector<QRhiShaderResourceBinding> bindings;
-        for (auto &u: uniforms) {
-            bindings.push_back(QRhiShaderResourceBinding::uniformBuffer(u.binding, QRhiShaderResourceBinding::StageFlag::VertexStage, m_ubuf));
-        }
-        m_resourceBindings->setBindings(bindings.begin(), bindings.end());
-        m_resourceBindings->create();
-        m_pipeline->setShaderResourceBindings(m_resourceBindings);
-
-        QRhiVertexInputLayout layout;
-        layout.setBindings({ { sizeof(float) }, { sizeof(float) }});
-        layout.setAttributes({ { /*buffer binding*/ 0, /*location*/ 0, QRhiVertexInputAttribute::Format::Float, /*offset*/ 0 },
-                               { /*buffer binding*/ 1, /*location*/ 1, QRhiVertexInputAttribute::Format::Float, /*offset*/ 0 } });
+        m_pipeline.setVxInputBuffer(m_xBuffer);
+        m_pipeline.setVyInputBuffer(m_yBuffer);
 
 
-        m_pipeline->setVertexInputLayout(layout);
+        m_errorBarsPipeline.setTopology(Pipeline::Topology::Lines);
+        m_errorBarsPipeline.create(this);
 
-        m_pipeline->create();
-    }
+        m_errorBarsBuffer = createBuffer<ErrorBarsPipeline::Pos>(BufferBase::Type::Dynamic, BufferBase::UsageFlag::VertexBuffer, 2e6);
+        m_errorBarsBindingSet = m_errorBarsPipeline.createBindingSet(this, {
+            .ubuf = m_ubuf
+        });
 
-    void initErrorsPipeline()
-    {
-        auto ri = m_window->rendererInterface();
-        auto rhi = static_cast<QRhi *>(ri->getResource(m_window, QSGRendererInterface::RhiResource));
-
-        m_errorBarsPipeline = rhi->newGraphicsPipeline();
-
-        m_errorBarsPipeline->setTopology(QRhiGraphicsPipeline::Topology::Lines);
-
-        m_errorBarsBuffer = rhi->newBuffer(QRhiBuffer::Type::Dynamic, QRhiBuffer::UsageFlag::VertexBuffer, 2e6);
-        m_errorBarsBuffer->create();
-
-        QFile vs_source(":/shaders/xyplot_errorbars.vert.qsb");
-        vs_source.open(QIODevice::ReadOnly);
-
-        QFile fs_source(":/shaders/xyplot_errorbars.frag.qsb");
-        fs_source.open(QIODevice::ReadOnly);
-
-        QShader vshader = QShader::fromSerialized(vs_source.readAll());
-        QShader fshader = QShader::fromSerialized(fs_source.readAll());
-
-        m_errorBarsPipeline->setShaderStages({ { QRhiShaderStage::Type::Vertex, vshader }, { QRhiShaderStage::Type::Fragment, fshader } });
-        m_errorBarsPipeline->setRenderPassDescriptor(renderPassDescriptor());
-        m_errorBarsPipeline->setFlags(QRhiGraphicsPipeline::Flag::UsesScissor);
-
-        m_errorBarsBindings = rhi->newShaderResourceBindings();
-        const auto uniforms = vshader.description().uniformBlocks();
-        std::vector<QRhiShaderResourceBinding> bindings;
-        for (auto &u: uniforms) {
-            bindings.push_back(QRhiShaderResourceBinding::uniformBuffer(u.binding, QRhiShaderResourceBinding::StageFlag::VertexStage, m_ubuf));
-        }
-        m_errorBarsBindings->setBindings(bindings.begin(), bindings.end());
-        m_errorBarsBindings->create();
-        m_errorBarsPipeline->setShaderResourceBindings(m_errorBarsBindings);
-
-        QRhiVertexInputLayout layout;
-        layout.setBindings({ { 2 * sizeof(float) } });
-        layout.setAttributes({ { /*buffer binding*/ 0, /*location*/ 0, QRhiVertexInputAttribute::Format::Float2, /*offset*/ 0 } });
-
-        m_errorBarsPipeline->setVertexInputLayout(layout);
-
-        m_errorBarsPipeline->create();
-    }
-
-    void releaseResources() override
-    {
-        delete m_ubuf;
-        delete m_xbuffer;
-        delete m_ybuffer;
-
-        delete m_resourceBindings;
-        delete m_pipeline;
-        m_pipeline = nullptr;
-
-        delete m_errorBarsBuffer;
-        delete m_errorBarsBindings;
-        delete m_errorBarsPipeline;
-        m_errorBarsPipeline = nullptr;
-    }
-
-    QSGRenderNode::RenderingFlags flags() const override
-    {
-        // By returning NoExternalRendering the scene graph renderer doesn't call beginExternal()
-        // endExternal() around the call to render(), which we need given we're not calling directly
-        // OpenGL/Vulkan stuff, but we're only going through the QRhi interface
-        return QSGRenderNode::DepthAwareRendering | QSGRenderNode::NoExternalRendering;
+        m_errorBarsPipeline.setPosInputBuffer(m_errorBarsBuffer);
     }
 
     void needsUpdate(DataSet *ds)
@@ -177,15 +62,12 @@ public:
         const auto xdata = m_dataset->getValues(0).data();
         const auto ydata = m_dataset->getValues(1).data();
 
-        auto data = m_xbuffer->beginFullDynamicBufferUpdateForCurrentFrame();
-        auto xdst = reinterpret_cast<float *>(data);
-
-        memcpy(xdst, xdata, dataCount * sizeof(float));
-        m_xbuffer->endFullDynamicBufferUpdateForCurrentFrame();
-
-        auto ydst = reinterpret_cast<float *>(m_ybuffer->beginFullDynamicBufferUpdateForCurrentFrame());
-        memcpy(ydst, ydata, dataCount * sizeof(float));
-        m_ybuffer->endFullDynamicBufferUpdateForCurrentFrame();
+        m_xBuffer.update([=](auto *data) {
+            memcpy(data, xdata, dataCount * sizeof(float));
+        });
+        m_yBuffer.update([=](auto *data) {
+            memcpy(data, ydata, dataCount * sizeof(float));
+        });
 
         m_allocated = dataCount;
 
@@ -193,11 +75,12 @@ public:
             const auto yPosErrors = m_dataset->getPositiveErrors(1).data();
             const auto yNegErrors = m_dataset->getNegativeErrors(1).data();
 
-            auto data = reinterpret_cast<QVector4D *>(m_errorBarsBuffer->beginFullDynamicBufferUpdateForCurrentFrame());
-            for (int i = 0; i < dataCount; ++i) {
-                data[i] = { xdata[i], ydata[i] - yPosErrors[i], xdata[i], ydata[i] + yNegErrors[i] };
-            }
-            m_errorBarsBuffer->endFullDynamicBufferUpdateForCurrentFrame();
+            m_errorBarsBuffer.update([=](auto *data) {
+                for (int i = 0; i < dataCount; ++i) {
+                    data[2 * i].pos = QVector2D(xdata[i], ydata[i] - yPosErrors[i]);
+                    data[2 * i + 1].pos = QVector2D(xdata[i], ydata[i] + yNegErrors[i]);
+                }
+            });
         }
 
         m_dataset = nullptr;
@@ -205,100 +88,53 @@ public:
 
     void prepare() final
     {
-        // matrix() returns a dangling pointer in render(), so copy it here for later.
-        // See https://bugreports.qt.io/browse/QTBUG-97589
-        m_matrix = *matrix();
-
-        if (!m_pipeline) {
+        if (!m_pipeline.isCreated()) {
             init();
         }
-
         if (m_dataset) {
-            if (!m_errorBarsPipeline && m_dataset->hasErrors) {
-                initErrorsPipeline();
-            }
             updateData();
         }
     }
 
-    std::tuple<QSize, QRhiCommandBuffer *> getRenderResources()
+    void render(const QMatrix4x4 &matrix) final
     {
-        auto ri = m_window->rendererInterface();
-        auto swapchain = static_cast<QRhiSwapChain *>(ri->getResource(m_window,
-                                                                      QSGRendererInterface::RhiSwapchainResource));
+        m_ubuf.update([&](XYPlotPipeline::Ubo *data) {
+            auto m = matrix * m_matrix;
+            memcpy(data->qt_Matrix.data(), m.data(), 64);
+        });
 
-        if (swapchain) {
-            return { swapchain->currentPixelSize(), swapchain->currentFrameCommandBuffer() };
-        }
+        bindPipeline(m_pipeline);
+        bindBindingSet(m_bindingSet);
+        draw(m_allocated);
 
-        auto cmdbuf = static_cast<QRhiCommandBuffer *>(ri->getResource(m_window,
-                                                                       QSGRendererInterface::RhiRedirectCommandBuffer));
-        auto target = static_cast<QRhiRenderTarget *>(ri->getResource(m_window,
-                                                                      QSGRendererInterface::RhiRedirectRenderTarget));
-
-        return { target->pixelSize(), cmdbuf };
+        bindPipeline(m_errorBarsPipeline);
+        bindBindingSet(m_errorBarsBindingSet);
+        draw(m_allocated * 2);
     }
 
-    void render(const QSGRenderNode::RenderState *state) final
-    {
-        QMatrix4x4 m = (*state->projectionMatrix()) * m_matrix * m_transform;
-
-        auto *ubuf = reinterpret_cast<float *>(m_ubuf->beginFullDynamicBufferUpdateForCurrentFrame());
-        memcpy(ubuf, m.data(), 16 * sizeof(float));
-        m_ubuf->endFullDynamicBufferUpdateForCurrentFrame();
-
-        auto [size, cmdbuf] = getRenderResources();
-
-        cmdbuf->setViewport(QRhiViewport(0, 0, size.width(), size.height()));
-
-        const int y = size.height() - m_chartRect.y() - m_chartRect.height();
-        cmdbuf->setScissor(QRhiScissor(m_chartRect.x(), y, m_chartRect.width(), m_chartRect.height()));
-
-        if (m_errorBarsPipeline) {
-            cmdbuf->setGraphicsPipeline(m_errorBarsPipeline);
-            const QRhiCommandBuffer::VertexInput bindings[] = { { m_errorBarsBuffer, 0 } };
-            cmdbuf->setVertexInput(0, 1, bindings);
-            cmdbuf->setShaderResources(m_errorBarsBindings);
-            cmdbuf->draw(m_allocated * 2);
-        }
-
-        cmdbuf->setGraphicsPipeline(m_pipeline);
-        const QRhiCommandBuffer::VertexInput bindings[] = { { m_xbuffer, 0 }, { m_ybuffer, 0 } };
-        cmdbuf->setVertexInput(0, 2, bindings);
-        cmdbuf->setShaderResources(m_resourceBindings);
-        cmdbuf->draw(m_allocated);
-    }
-
-    void setWindow(QQuickWindow *win, const QMatrix4x4 &transform)
-    {
-        m_window = win;
-        m_transform = transform;
-    }
-
-    QRhiGraphicsPipeline *m_pipeline = nullptr;
-    QRhiShaderResourceBindings *m_resourceBindings;
-
-    QRhiGraphicsPipeline *m_errorBarsPipeline = nullptr;
-    QRhiBuffer *m_errorBarsBuffer;
-    QRhiShaderResourceBindings *m_errorBarsBindings;
-
-    QQuickWindow *m_window;
-    QRhiBuffer *m_xbuffer;
-    QRhiBuffer *m_ybuffer;
-    QRhiBuffer *m_ubuf;
+    XYPlotPipeline m_pipeline;
     size_t m_allocated = 0;
-    QMatrix4x4 m_matrix;
-    QMatrix4x4 m_transform;
-    QRect m_chartRect;
+    Buffer<XYPlotPipeline::Vx> m_xBuffer;
+    Buffer<XYPlotPipeline::Vy> m_yBuffer;
+    Buffer<XYPlotPipeline::Ubo> m_ubuf;
+    BindingSet m_bindingSet;
+
+    ErrorBarsPipeline m_errorBarsPipeline;
+    Buffer<ErrorBarsPipeline::Pos> m_errorBarsBuffer;
+    BindingSet m_errorBarsBindingSet;
+
     DataSet *m_dataset = nullptr;
+    QMatrix4x4 m_matrix;
 };
 
-QSGNode *XYPlot::sgNode()
+XYPlot::XYPlot()
 {
-    if (!m_node) {
-        m_node = new Node;
-    }
-    return m_node;
+    m_renderer = new XYRenderer;
+}
+
+PlotRenderer *XYPlot::renderer()
+{
+    return m_renderer;
 }
 
 void XYPlot::update(QQuickWindow *window, const QRect &chartRect, double devicePixelRatio, bool paused)
@@ -306,9 +142,6 @@ void XYPlot::update(QQuickWindow *window, const QRect &chartRect, double deviceP
     QMatrix4x4 m;
     const auto xa = xAxis();
     const auto ya = yAxis();
-
-    m_node->m_chartRect = QRect(chartRect.x() * devicePixelRatio, chartRect.y() * devicePixelRatio,
-                                chartRect.width() * devicePixelRatio, chartRect.height() * devicePixelRatio);
 
     const bool xinv = xa && xa->direction() == Axis::Direction::RightToLeft;
     const bool yinv = ya && ya->direction() == Axis::Direction::BottomToTop;
@@ -321,12 +154,11 @@ void XYPlot::update(QQuickWindow *window, const QRect &chartRect, double deviceP
     double ytr = ya ? (yinv ? -ya->max() : -ya->min()) : 0;
     m.translate(xtr, ytr);
 
-    m_node->setWindow(window, m);
+    m_renderer->m_matrix = m;
     if (m_needsUpdate && !paused) {
         m_needsUpdate = false;
 
-        m_node->needsUpdate(dataSet());
-        m_node->markDirty(QSGNode::DirtyGeometry);
+        m_renderer->m_dataset = dataSet();
     }
 }
 

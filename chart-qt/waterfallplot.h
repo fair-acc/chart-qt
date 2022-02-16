@@ -14,6 +14,7 @@ class WaterfallPlot : public Plot
     Q_PROPERTY(double gradientStop READ gradientStop WRITE setGradientStop NOTIFY gradientChanged)
     QML_ELEMENT
 public:
+    WaterfallPlot();
 
     double gradientStart() const;
     void setGradientStart(double g);
@@ -21,20 +22,21 @@ public:
     double gradientStop() const;
     void setGradientStop(double g);
 
-    QSGNode *sgNode() override;
     void update(QQuickWindow *window, const QRect &chartRect, double devicePixelRatio, bool paused) override;
+
+    PlotRenderer *renderer() override;
 
 signals:
     void gradientChanged();
 
 private:
+    class Renderer;
     class Node;
 
     size_t m_allocated = 0;
-    Node *m_node = nullptr;
-
     double m_gradientStart = 0;
     double m_gradientStop = 0;
+    Renderer *m_renderer;
 };
 
 }

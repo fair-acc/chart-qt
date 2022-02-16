@@ -13,6 +13,7 @@
 #include "plot.h"
 #include "xyplot.h"
 #include "axis.h"
+#include "renderutils.h"
 
 namespace chart_qt {
 
@@ -450,14 +451,15 @@ QSGNode *ChartItem::updatePaintNode(QSGNode *node, UpdatePaintNodeData *)
     static_cast<QSGTransformNode *>(plotsParentNode)->setMatrix(matrix);
 
     for (auto p: m_plotsToInit) {
-        plotsParentNode->appendChildNode(p->sgNode());
+        plotsParentNode->appendChildNode(p->renderer()->sgNode());
     }
     m_plotsToInit.clear();
 
     auto rect = mapRectToScene(crect).toRect();
 
     for (auto p: m_plots) {
-        p->update(window(), rect, window()->effectiveDevicePixelRatio(), m_paused);
+        p->update(window(), rect, window()->effectiveDevicePixelRatio(), false);
+        p->renderer()->update(window(), p, rect, window()->effectiveDevicePixelRatio());
     }
     return node;
 }

@@ -1,5 +1,5 @@
 #version 440
-layout(location = 0) in vec4 pos;
+layout(location = 0) in vec2 pos;
 
 layout(binding = 0) uniform Ubo {
 	mat4 qt_Matrix;
@@ -8,5 +8,5 @@ layout(binding = 0) uniform Ubo {
 out gl_PerVertex { vec4 gl_Position; };
 
 void main() {
-    gl_Position = ubuf.qt_Matrix * pos;
+    gl_Position = ubuf.qt_Matrix * vec4(pos, 0, 1);
 }

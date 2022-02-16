@@ -11,6 +11,7 @@ namespace chart_qt {
 
 class DataSet;
 class Axis;
+class PlotRenderer;
 
 class Plot : public QObject, public QQmlParserStatus
 {
@@ -21,8 +22,8 @@ class Plot : public QObject, public QQmlParserStatus
     Q_PROPERTY(DataSet *dataSet READ dataSet WRITE setDataSet NOTIFY dataSetChanged)
 public:
 
-    virtual QSGNode *sgNode() = 0;
     virtual void update(QQuickWindow *window, const QRect &chartRect, double devicePixelRatio, bool paused) = 0;
+    virtual PlotRenderer *renderer() = 0;
 
     void setDataSet(DataSet *dataset);
     inline DataSet *dataSet() const { return m_dataset; }
