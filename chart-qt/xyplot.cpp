@@ -27,8 +27,8 @@ public:
         m_pipeline.setTopology(Pipeline::Topology::LineStrip);
         m_pipeline.create(this);
 
-        m_xBuffer = createBuffer<XYPlotPipeline::Vx>(BufferBase::Type::Dynamic, BufferBase::UsageFlag::VertexBuffer, 1e6);
-        m_yBuffer = createBuffer<XYPlotPipeline::Vy>(BufferBase::Type::Dynamic, BufferBase::UsageFlag::VertexBuffer, 1e6);
+        m_xBuffer = createBuffer<XYPlotPipeline::Vx>(BufferBase::Type::Dynamic, BufferBase::UsageFlag::VertexBuffer, m_dataCount);
+        m_yBuffer = createBuffer<XYPlotPipeline::Vy>(BufferBase::Type::Dynamic, BufferBase::UsageFlag::VertexBuffer, m_dataCount);
         m_ubuf = createBuffer<XYPlotPipeline::Ubo>(BufferBase::Type::Dynamic, BufferBase::UsageFlag::UniformBuffer);
 
         m_bindingSet = m_pipeline.createBindingSet(this, XYPlotPipeline::Bindings {
@@ -42,7 +42,7 @@ public:
         m_errorBarsPipeline.setTopology(Pipeline::Topology::Lines);
         m_errorBarsPipeline.create(this);
 
-        m_errorBarsBuffer = createBuffer<ErrorBarsPipeline::Pos>(BufferBase::Type::Dynamic, BufferBase::UsageFlag::VertexBuffer, 2e6);
+        m_errorBarsBuffer = createBuffer<ErrorBarsPipeline::Pos>(BufferBase::Type::Dynamic, BufferBase::UsageFlag::VertexBuffer, m_dataCount * 2);
         m_errorBarsBindingSet = m_errorBarsPipeline.createBindingSet(this, {
             .ubuf = m_ubuf
         });
@@ -69,8 +69,6 @@ public:
             memcpy(data, ydata, dataCount * sizeof(float));
         });
 
-        m_allocated = dataCount;
-
         if (m_dataset->hasErrors) {
             const auto yPosErrors = m_dataset->getPositiveErrors(1).data();
             const auto yNegErrors = m_dataset->getNegativeErrors(1).data();
@@ -88,9 +86,19 @@ public:
 
     void prepare() final
     {
-        if (!m_pipeline.isCreated()) {
-            init();
+        auto dataCount = m_dataCount;
+        if (m_dataset) {
+            dataCount = m_dataset->getDataCount();
         }
+
+        if (!m_pipeline.isCreated()) {
+            m_dataCount = dataCount;
+            init();
+        } else if (m_dataCount != dataCount) {
+            m_dataCount = dataCount;
+            // TODO resize buffers
+        }
+
         if (m_dataset) {
             updateData();
         }
@@ -105,15 +113,15 @@ public:
 
         bindPipeline(m_errorBarsPipeline);
         bindBindingSet(m_errorBarsBindingSet);
-        draw(m_allocated * 2);
+        draw(m_dataCount * 2);
 
         bindPipeline(m_pipeline);
         bindBindingSet(m_bindingSet);
-        draw(m_allocated);
+        draw(m_dataCount);
     }
 
     XYPlotPipeline m_pipeline;
-    size_t m_allocated = 0;
+    size_t m_dataCount = 0;
     Buffer<XYPlotPipeline::Vx> m_xBuffer;
     Buffer<XYPlotPipeline::Vy> m_yBuffer;
     Buffer<XYPlotPipeline::Ubo> m_ubuf;
@@ -129,11 +137,15 @@ public:
 
 XYPlot::XYPlot()
 {
-    m_renderer = new XYRenderer;
+
 }
 
 PlotRenderer *XYPlot::renderer()
 {
+    if (!m_renderer) {
+        m_renderer = new XYRenderer;
+        m_renderer->m_dataset = dataSet();
+    }
     return m_renderer;
 }
 
