@@ -7,7 +7,7 @@
 #include <QJsonObject>
 #include <QJsonArray>
 
-namespace ExpertUi {
+namespace ChartQtSample {
 
 static constexpr auto url = "https://localhost:42042";
 

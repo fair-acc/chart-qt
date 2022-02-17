@@ -7,7 +7,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-namespace ExpertUi {
+namespace ChartQtSample {
 
 NetworkModel::NetworkModel(QObject *parent)
     : QAbstractListModel{ parent } {

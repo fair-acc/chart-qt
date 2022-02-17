@@ -5,7 +5,7 @@
 #include <QQmlEngine>
 #include <QStringListModel>
 
-namespace ExpertUi {
+namespace ChartQtSample {
 
 class NetworkModel : public QAbstractListModel {
     Q_OBJECT

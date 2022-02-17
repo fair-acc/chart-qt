@@ -3,7 +3,7 @@
 
 #include <dataset.h>
 
-namespace ExpertUi {
+namespace ChartQtSample {
 
 class SinDataSet : public chart_qt::DataSet
 {

@@ -14,4 +14,4 @@ set(CMAKE_MODULE_PATH "${sanitizers_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 find_package(Sanitizers)
 
 add_subdirectory(chart-qt)
-add_subdirectory(expertui)
+add_subdirectory(chart-qt-sample)

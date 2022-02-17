@@ -5,7 +5,7 @@
 #include <QStringListModel>
 #include <QQmlEngine>
 
-namespace ExpertUi {
+namespace ChartQtSample {
 
 class DevicesModel : public QAbstractListModel
 {

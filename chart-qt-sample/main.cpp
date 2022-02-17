@@ -14,9 +14,9 @@ int main(int argc, char **argv)
 {
     QGuiApplication app(argc, argv);
 
-    qmlRegisterType<ExpertUi::NetworkModel>("ExpertUi", 1, 0, "NetworkModel");
-    qmlRegisterType<ExpertUi::DevicesModel>("ExpertUi", 1, 0, "DevicesModel");
-    qmlRegisterType<ExpertUi::SinDataSet>("ExpertUi", 1, 0, "SinDataSet");
+    qmlRegisterType<ChartQtSample::NetworkModel>("ChartQtSample", 1, 0, "NetworkModel");
+    qmlRegisterType<ChartQtSample::DevicesModel>("ChartQtSample", 1, 0, "DevicesModel");
+    qmlRegisterType<ChartQtSample::SinDataSet>("ChartQtSample", 1, 0, "SinDataSet");
 
     QQmlApplicationEngine engine(QStringLiteral(":/main.qml"));
 

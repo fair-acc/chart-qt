@@ -1,6 +1,6 @@
 import QtQuick.Controls 2.3
 import ChartQt 1.0
-import ExpertUi 1.0
+import ChartQtSample 1.0
 import QtQuick 2.0
 
 ApplicationWindow {
