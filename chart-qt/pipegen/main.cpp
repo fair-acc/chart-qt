@@ -25,73 +25,11 @@ static QString type(const QShaderDescription::VariableType &type)
         case QShaderDescription::Vec2: return "QVector2D";
         case QShaderDescription::Vec3: return "QVector3D";
         case QShaderDescription::Vec4: return "QVector4D";
-        case QShaderDescription::Mat2:
-        case QShaderDescription::Mat2x3:
-        case QShaderDescription::Mat2x4:
-        case QShaderDescription::Mat3:
-        case QShaderDescription::Mat3x2:
-        case QShaderDescription::Mat3x4: break;
         case QShaderDescription::Mat4: return "std::array<float, 16>"; // Cannot use QMatrix4x4 here, its size is 68 instead of 64
-        case QShaderDescription::Mat4x2:
-        case QShaderDescription::Mat4x3: break;
-
         case QShaderDescription::Int: return "int32_t";
-        case QShaderDescription::Int2:
-        case QShaderDescription::Int3:
-        case QShaderDescription::Int4: break;
-
         case QShaderDescription::Uint: return "uint32_t";
-        case QShaderDescription::Uint2:
-        case QShaderDescription::Uint3:
-        case QShaderDescription::Uint4: break;
-
         case QShaderDescription::Bool: return "bool";
-        case QShaderDescription::Bool2:
-        case QShaderDescription::Bool3:
-        case QShaderDescription::Bool4:
-
-        case QShaderDescription::Double:
-        case QShaderDescription::Double2:
-        case QShaderDescription::Double3:
-        case QShaderDescription::Double4:
-        case QShaderDescription::DMat2:
-        case QShaderDescription::DMat2x3:
-        case QShaderDescription::DMat2x4:
-        case QShaderDescription::DMat3:
-        case QShaderDescription::DMat3x2:
-        case QShaderDescription::DMat3x4:
-        case QShaderDescription::DMat4:
-        case QShaderDescription::DMat4x2:
-        case QShaderDescription::DMat4x3:
-
-        case QShaderDescription::Sampler1D:
-        case QShaderDescription::Sampler2D:
-        case QShaderDescription::Sampler2DMS:
-        case QShaderDescription::Sampler3D:
-        case QShaderDescription::SamplerCube:
-        case QShaderDescription::Sampler1DArray:
-        case QShaderDescription::Sampler2DArray:
-        case QShaderDescription::Sampler2DMSArray:
-        case QShaderDescription::Sampler3DArray:
-        case QShaderDescription::SamplerCubeArray:
-        case QShaderDescription::SamplerRect:
-        case QShaderDescription::SamplerBuffer:
-        case QShaderDescription::SamplerExternalOES:
-
-        case QShaderDescription::Image1D:
-        case QShaderDescription::Image2D:
-        case QShaderDescription::Image2DMS:
-        case QShaderDescription::Image3D:
-        case QShaderDescription::ImageCube:
-        case QShaderDescription::Image1DArray:
-        case QShaderDescription::Image2DArray:
-        case QShaderDescription::Image2DMSArray:
-        case QShaderDescription::Image3DArray:
-        case QShaderDescription::ImageCubeArray:
-        case QShaderDescription::ImageRect:
-        case QShaderDescription::ImageBuffer:
-
-        case QShaderDescription::Struct:
+        default:
             break;
     }
     qCritical("Unhandled variable type");
@@ -111,73 +49,11 @@ static QString includeForType(const QShaderDescription::VariableType &type)
         case QShaderDescription::Vec2: return "QVector2D";
         case QShaderDescription::Vec3: return "QVector3D";
         case QShaderDescription::Vec4: return "QVector4D";
-        case QShaderDescription::Mat2:
-        case QShaderDescription::Mat2x3:
-        case QShaderDescription::Mat2x4:
-        case QShaderDescription::Mat3:
-        case QShaderDescription::Mat3x2:
-        case QShaderDescription::Mat3x4: break;
         case QShaderDescription::Mat4: return "array";
-        case QShaderDescription::Mat4x2:
-        case QShaderDescription::Mat4x3: break;
-
         case QShaderDescription::Int: return "stdint.h";
-        case QShaderDescription::Int2:
-        case QShaderDescription::Int3:
-        case QShaderDescription::Int4: break;
-
         case QShaderDescription::Uint: return "stdint.h";
-        case QShaderDescription::Uint2:
-        case QShaderDescription::Uint3:
-        case QShaderDescription::Uint4: break;
-
         case QShaderDescription::Bool: return {};
-        case QShaderDescription::Bool2:
-        case QShaderDescription::Bool3:
-        case QShaderDescription::Bool4:
-
-        case QShaderDescription::Double:
-        case QShaderDescription::Double2:
-        case QShaderDescription::Double3:
-        case QShaderDescription::Double4:
-        case QShaderDescription::DMat2:
-        case QShaderDescription::DMat2x3:
-        case QShaderDescription::DMat2x4:
-        case QShaderDescription::DMat3:
-        case QShaderDescription::DMat3x2:
-        case QShaderDescription::DMat3x4:
-        case QShaderDescription::DMat4:
-        case QShaderDescription::DMat4x2:
-        case QShaderDescription::DMat4x3:
-
-        case QShaderDescription::Sampler1D:
-        case QShaderDescription::Sampler2D:
-        case QShaderDescription::Sampler2DMS:
-        case QShaderDescription::Sampler3D:
-        case QShaderDescription::SamplerCube:
-        case QShaderDescription::Sampler1DArray:
-        case QShaderDescription::Sampler2DArray:
-        case QShaderDescription::Sampler2DMSArray:
-        case QShaderDescription::Sampler3DArray:
-        case QShaderDescription::SamplerCubeArray:
-        case QShaderDescription::SamplerRect:
-        case QShaderDescription::SamplerBuffer:
-        case QShaderDescription::SamplerExternalOES:
-
-        case QShaderDescription::Image1D:
-        case QShaderDescription::Image2D:
-        case QShaderDescription::Image2DMS:
-        case QShaderDescription::Image3D:
-        case QShaderDescription::ImageCube:
-        case QShaderDescription::Image1DArray:
-        case QShaderDescription::Image2DArray:
-        case QShaderDescription::Image2DMSArray:
-        case QShaderDescription::Image3DArray:
-        case QShaderDescription::ImageCubeArray:
-        case QShaderDescription::ImageRect:
-        case QShaderDescription::ImageBuffer:
-
-        case QShaderDescription::Struct:
+        default:
             break;
     }
     qCritical("Unhandled variable type");
@@ -197,73 +73,11 @@ static int typeStride(const QShaderDescription::VariableType &type)
         case QShaderDescription::Vec2: return sizeof(float) * 2;
         case QShaderDescription::Vec3: return sizeof(float) * 3;
         case QShaderDescription::Vec4: return sizeof(float) * 4;
-        case QShaderDescription::Mat2:
-        case QShaderDescription::Mat2x3:
-        case QShaderDescription::Mat2x4:
-        case QShaderDescription::Mat3:
-        case QShaderDescription::Mat3x2:
-        case QShaderDescription::Mat3x4: break;
         case QShaderDescription::Mat4: return sizeof(float) * 16;
-        case QShaderDescription::Mat4x2:
-        case QShaderDescription::Mat4x3: break;
-
         case QShaderDescription::Int: return 4;
-        case QShaderDescription::Int2:
-        case QShaderDescription::Int3:
-        case QShaderDescription::Int4: break;
-
         case QShaderDescription::Uint: return 4;
-        case QShaderDescription::Uint2:
-        case QShaderDescription::Uint3:
-        case QShaderDescription::Uint4: break;
-
         case QShaderDescription::Bool: return 1;
-        case QShaderDescription::Bool2:
-        case QShaderDescription::Bool3:
-        case QShaderDescription::Bool4:
-
-        case QShaderDescription::Double:
-        case QShaderDescription::Double2:
-        case QShaderDescription::Double3:
-        case QShaderDescription::Double4:
-        case QShaderDescription::DMat2:
-        case QShaderDescription::DMat2x3:
-        case QShaderDescription::DMat2x4:
-        case QShaderDescription::DMat3:
-        case QShaderDescription::DMat3x2:
-        case QShaderDescription::DMat3x4:
-        case QShaderDescription::DMat4:
-        case QShaderDescription::DMat4x2:
-        case QShaderDescription::DMat4x3:
-
-        case QShaderDescription::Sampler1D:
-        case QShaderDescription::Sampler2D:
-        case QShaderDescription::Sampler2DMS:
-        case QShaderDescription::Sampler3D:
-        case QShaderDescription::SamplerCube:
-        case QShaderDescription::Sampler1DArray:
-        case QShaderDescription::Sampler2DArray:
-        case QShaderDescription::Sampler2DMSArray:
-        case QShaderDescription::Sampler3DArray:
-        case QShaderDescription::SamplerCubeArray:
-        case QShaderDescription::SamplerRect:
-        case QShaderDescription::SamplerBuffer:
-        case QShaderDescription::SamplerExternalOES:
-
-        case QShaderDescription::Image1D:
-        case QShaderDescription::Image2D:
-        case QShaderDescription::Image2DMS:
-        case QShaderDescription::Image3D:
-        case QShaderDescription::ImageCube:
-        case QShaderDescription::Image1DArray:
-        case QShaderDescription::Image2DArray:
-        case QShaderDescription::Image2DMSArray:
-        case QShaderDescription::Image3DArray:
-        case QShaderDescription::ImageCubeArray:
-        case QShaderDescription::ImageRect:
-        case QShaderDescription::ImageBuffer:
-
-        case QShaderDescription::Struct:
+        default:
             break;
     }
     qCritical("Unhandled variable type");
@@ -283,73 +97,11 @@ static QString typeFormat(const QShaderDescription::VariableType &type)
         case QShaderDescription::Vec2: return "Float2";
         case QShaderDescription::Vec3: return "Float3";
         case QShaderDescription::Vec4: return "Float4";
-        case QShaderDescription::Mat2:
-        case QShaderDescription::Mat2x3:
-        case QShaderDescription::Mat2x4:
-        case QShaderDescription::Mat3:
-        case QShaderDescription::Mat3x2:
-        case QShaderDescription::Mat3x4: break;
         case QShaderDescription::Mat4: return "Mat4";
-        case QShaderDescription::Mat4x2:
-        case QShaderDescription::Mat4x3: break;
-
         case QShaderDescription::Int: return "Int";
-        case QShaderDescription::Int2:
-        case QShaderDescription::Int3:
-        case QShaderDescription::Int4: break;
-
         case QShaderDescription::Uint: return "Uint";
-        case QShaderDescription::Uint2:
-        case QShaderDescription::Uint3:
-        case QShaderDescription::Uint4: break;
-
         case QShaderDescription::Bool: return "Bool";
-        case QShaderDescription::Bool2:
-        case QShaderDescription::Bool3:
-        case QShaderDescription::Bool4:
-
-        case QShaderDescription::Double:
-        case QShaderDescription::Double2:
-        case QShaderDescription::Double3:
-        case QShaderDescription::Double4:
-        case QShaderDescription::DMat2:
-        case QShaderDescription::DMat2x3:
-        case QShaderDescription::DMat2x4:
-        case QShaderDescription::DMat3:
-        case QShaderDescription::DMat3x2:
-        case QShaderDescription::DMat3x4:
-        case QShaderDescription::DMat4:
-        case QShaderDescription::DMat4x2:
-        case QShaderDescription::DMat4x3:
-
-        case QShaderDescription::Sampler1D:
-        case QShaderDescription::Sampler2D:
-        case QShaderDescription::Sampler2DMS:
-        case QShaderDescription::Sampler3D:
-        case QShaderDescription::SamplerCube:
-        case QShaderDescription::Sampler1DArray:
-        case QShaderDescription::Sampler2DArray:
-        case QShaderDescription::Sampler2DMSArray:
-        case QShaderDescription::Sampler3DArray:
-        case QShaderDescription::SamplerCubeArray:
-        case QShaderDescription::SamplerRect:
-        case QShaderDescription::SamplerBuffer:
-        case QShaderDescription::SamplerExternalOES:
-
-        case QShaderDescription::Image1D:
-        case QShaderDescription::Image2D:
-        case QShaderDescription::Image2DMS:
-        case QShaderDescription::Image3D:
-        case QShaderDescription::ImageCube:
-        case QShaderDescription::Image1DArray:
-        case QShaderDescription::Image2DArray:
-        case QShaderDescription::Image2DMSArray:
-        case QShaderDescription::Image3DArray:
-        case QShaderDescription::ImageCubeArray:
-        case QShaderDescription::ImageRect:
-        case QShaderDescription::ImageBuffer:
-
-        case QShaderDescription::Struct:
+        default:
             break;
     }
     qCritical("Unhandled variable type");
