@@ -1,4 +1,4 @@
-#include "defaultchartinputhandler.h"
+#include "defaultzoomhandler.h"
 
 #include <QWheelEvent>
 #include <QDebug>
@@ -8,17 +8,17 @@
 
 namespace chart_qt {
 
-DefaultChartInputHandler::DefaultChartInputHandler(QObject *parent)
+DefaultZoomHandler::DefaultZoomHandler(QObject *parent)
                         : QObject(parent)
 {
 }
 
-QQuickItem *DefaultChartInputHandler::zoomRectangle() const
+QQuickItem *DefaultZoomHandler::zoomRectangle() const
 {
     return m_zoomRectangle;
 }
 
-void DefaultChartInputHandler::setZoomRectangle(QQuickItem *r)
+void DefaultZoomHandler::setZoomRectangle(QQuickItem *r)
 {
     if (m_zoomRectangle != r) {
         m_zoomRectangle = r;
@@ -28,11 +28,11 @@ void DefaultChartInputHandler::setZoomRectangle(QQuickItem *r)
     }
 }
 
-void DefaultChartInputHandler::classBegin()
+void DefaultZoomHandler::classBegin()
 {
 }
 
-void DefaultChartInputHandler::componentComplete()
+void DefaultZoomHandler::componentComplete()
 {
     if (auto c = qobject_cast<ChartItem *>(parent())) {
         c->installEventFilter(this);
@@ -50,7 +50,7 @@ void DefaultChartInputHandler::componentComplete()
     }
 }
 
-bool DefaultChartInputHandler::eventFilter(QObject *object, QEvent *event)
+bool DefaultZoomHandler::eventFilter(QObject *object, QEvent *event)
 {
     switch (event->type()) {
         case QEvent::Wheel:
@@ -76,12 +76,12 @@ bool DefaultChartInputHandler::eventFilter(QObject *object, QEvent *event)
     return QObject::eventFilter(object, event);
 }
 
-ChartItem *DefaultChartInputHandler::chartItem() const
+ChartItem *DefaultZoomHandler::chartItem() const
 {
     return static_cast<ChartItem *>(parent());
 }
 
-void DefaultChartInputHandler::wheelEvent(QWheelEvent *evt)
+void DefaultZoomHandler::wheelEvent(QWheelEvent *evt)
 {
     double m = 1.1;
     if (evt->angleDelta().y() < 0) {
@@ -121,7 +121,7 @@ void DefaultChartInputHandler::wheelEvent(QWheelEvent *evt)
     }
 }
 
-void DefaultChartInputHandler::mousePressEvent(QMouseEvent *evt)
+void DefaultZoomHandler::mousePressEvent(QMouseEvent *evt)
 {
     switch (evt->button()) {
         case Qt::MiddleButton: {
@@ -144,7 +144,7 @@ void DefaultChartInputHandler::mousePressEvent(QMouseEvent *evt)
     evt->accept();
 }
 
-void DefaultChartInputHandler::mouseMoveEvent(QMouseEvent *evt)
+void DefaultZoomHandler::mouseMoveEvent(QMouseEvent *evt)
 {
     if (!m_panningAxis.empty()) {
         pan(evt->position());
@@ -164,7 +164,7 @@ void DefaultChartInputHandler::mouseMoveEvent(QMouseEvent *evt)
     }
 }
 
-void DefaultChartInputHandler::mouseReleaseEvent(QMouseEvent *evt)
+void DefaultZoomHandler::mouseReleaseEvent(QMouseEvent *evt)
 {
     switch (evt->button()) {
         case Qt::MiddleButton: {
@@ -186,7 +186,7 @@ void DefaultChartInputHandler::mouseReleaseEvent(QMouseEvent *evt)
     }
 }
 
-void DefaultChartInputHandler::touchEvent(QTouchEvent *evt)
+void DefaultZoomHandler::touchEvent(QTouchEvent *evt)
 {
     if (evt->points().size() == 1) {
         if (evt->isBeginEvent()) {
@@ -240,7 +240,7 @@ void DefaultChartInputHandler::touchEvent(QTouchEvent *evt)
     }
 }
 
-void DefaultChartInputHandler::startPanning(const QPointF &pos)
+void DefaultZoomHandler::startPanning(const QPointF &pos)
 {
     auto c = chartItem();
     if (c->contentRect().contains(pos)) {
@@ -255,7 +255,7 @@ void DefaultChartInputHandler::startPanning(const QPointF &pos)
     m_pressPos = pos;
 }
 
-void DefaultChartInputHandler::pan(const QPointF &pos)
+void DefaultZoomHandler::pan(const QPointF &pos)
 {
     auto c = chartItem();
     auto dpos = pos - m_pressPos;

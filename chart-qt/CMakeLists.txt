@@ -24,7 +24,7 @@ set(SOURCES chartitem.cpp
             plot.cpp
             xyplot.cpp
             waterfallplot.cpp
-            defaultchartinputhandler.cpp
+            defaultzoomhandler.cpp
             chartlayout.cpp
             renderutils.cpp
             )

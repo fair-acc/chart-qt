@@ -40,7 +40,7 @@ ApplicationWindow {
             id: chart
             clip: true
 
-            DefaultChartInputHandler {}
+            DefaultZoomHandler {}
 
             XYPlot {
                 id: xy

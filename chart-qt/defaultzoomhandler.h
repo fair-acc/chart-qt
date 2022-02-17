@@ -18,14 +18,14 @@ namespace chart_qt {
 class Axis;
 class ChartItem;
 
-class DefaultChartInputHandler : public QObject, public QQmlParserStatus
+class DefaultZoomHandler : public QObject, public QQmlParserStatus
 {
     Q_OBJECT
     Q_INTERFACES(QQmlParserStatus)
     Q_PROPERTY(QQuickItem *zoomRectangle READ zoomRectangle WRITE setZoomRectangle NOTIFY zoomRectangleChanged)
     QML_ELEMENT
 public:
-    DefaultChartInputHandler(QObject *parent = nullptr);
+    DefaultZoomHandler(QObject *parent = nullptr);
 
     QQuickItem *zoomRectangle() const;
     void setZoomRectangle(QQuickItem *rect);
