@@ -103,13 +103,13 @@ public:
             memcpy(data->qt_Matrix.data(), m.data(), 64);
         });
 
-        bindPipeline(m_pipeline);
-        bindBindingSet(m_bindingSet);
-        draw(m_allocated);
-
         bindPipeline(m_errorBarsPipeline);
         bindBindingSet(m_errorBarsBindingSet);
         draw(m_allocated * 2);
+
+        bindPipeline(m_pipeline);
+        bindBindingSet(m_bindingSet);
+        draw(m_allocated);
     }
 
     XYPlotPipeline m_pipeline;
