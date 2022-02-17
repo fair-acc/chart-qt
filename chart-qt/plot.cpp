@@ -5,6 +5,12 @@
 
 namespace chart_qt {
 
+Plot::Plot()
+{
+}
+
+Plot::~Plot() = default;
+
 void Plot::setDataSet(DataSet *dataset)
 {
     if (m_dataset == dataset) {
@@ -22,6 +28,11 @@ void Plot::setDataSet(DataSet *dataset)
         connect(dataset, &DataSet::dataChanged, this, &Plot::updateNeeded);
         connect(dataset, &DataSet::dataChanged, this, [this]() { m_needsUpdate = true; });
     }
+}
+
+DataSet *Plot::dataSet() const
+{
+    return m_dataset.data();
 }
 
 Axis *Plot::xAxis() const

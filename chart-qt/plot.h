@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QQmlParserStatus>
+#include <QPointer>
 
 class QSGNode;
 class QQuickWindow;
@@ -21,12 +22,14 @@ class Plot : public QObject, public QQmlParserStatus
     Q_PROPERTY(Axis *yAxis READ yAxis WRITE setYAxis NOTIFY yAxisChanged)
     Q_PROPERTY(DataSet *dataSet READ dataSet WRITE setDataSet NOTIFY dataSetChanged)
 public:
+    Plot();
+    ~Plot();
 
     virtual void update(QQuickWindow *window, const QRect &chartRect, double devicePixelRatio, bool paused) = 0;
     virtual PlotRenderer *renderer() = 0;
 
     void setDataSet(DataSet *dataset);
-    inline DataSet *dataSet() const { return m_dataset; }
+    DataSet *dataSet() const;
 
     Axis *xAxis() const;
     void setXAxis(Axis *axis);
@@ -49,9 +52,9 @@ private:
     void resetXAxis();
     void resetYAxis();
 
-    DataSet *m_dataset = nullptr;
-    Axis *m_xAxis = nullptr;
-    Axis *m_yAxis = nullptr;
+    QPointer<DataSet> m_dataset;
+    QPointer<Axis> m_xAxis;
+    QPointer<Axis> m_yAxis;
 };
 
 }
