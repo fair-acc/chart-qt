@@ -104,4 +104,4 @@ void NetworkModel::getFields() {
     });
 }
 
-}
+} // namespace ChartQtSample

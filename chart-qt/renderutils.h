@@ -6,9 +6,9 @@
 
 #include <tl/function_ref.hpp>
 
-#include <QString>
-#include <QSize>
 #include <QRect>
+#include <QSize>
+#include <QString>
 
 class QQuickWindow;
 class QRectF;
@@ -22,8 +22,7 @@ class Pipeline;
 class PlotRenderer;
 class BindingSet;
 
-class BufferBase
-{
+class BufferBase {
 public:
     enum class Type {
         Immutable,
@@ -32,8 +31,8 @@ public:
     };
 
     enum class UsageFlag {
-        VertexBuffer = 1 << 0,
-        IndexBuffer = 1 << 1,
+        VertexBuffer  = 1 << 0,
+        IndexBuffer   = 1 << 1,
         UniformBuffer = 1 << 2,
         StorageBuffer = 1 << 3
     };
@@ -45,9 +44,9 @@ public:
     ~BufferBase();
 
     BufferBase &operator=(const BufferBase &) = delete;
-    BufferBase &operator=(BufferBase &&);
+    BufferBase &operator                      =(BufferBase &&);
 
-    void update(tl::function_ref<void (char *)> cb);
+    void        update(tl::function_ref<void(char *)> cb);
 
 private:
     struct Private;
@@ -59,28 +58,25 @@ private:
 };
 
 template<typename... Ts>
-struct DataLayout
-{
+struct DataLayout {
 };
 
 template<typename T>
-class Buffer : public BufferBase
-{
+class Buffer : public BufferBase {
 public:
     using BufferBase::BufferBase;
-    Buffer(BufferBase &&b) : BufferBase(std::move(b)) {}
+    Buffer(BufferBase &&b)
+        : BufferBase(std::move(b)) {}
     Buffer(Buffer<T> &&);
     ~Buffer() { this->~BufferBase(); }
 
     using BufferBase::operator=;
-    Buffer<T> &operator=(Buffer<T> &&b)
-    {
+    Buffer<T>        &operator=(Buffer<T> &&b) {
         BufferBase::operator=(std::move(b));
         return *this;
     }
 
-    void update(tl::function_ref<void (T *)> cb)
-    {
+    void update(tl::function_ref<void(T *)> cb) {
         BufferBase::update([=](char *data) {
             cb(reinterpret_cast<T *>(data));
         });
@@ -88,25 +84,25 @@ public:
 };
 
 template<typename T>
-class BufferRef
-{
+class BufferRef {
 public:
-    BufferRef(const Buffer<T> &buf) : ref(buf) {}
+    BufferRef(const Buffer<T> &buf)
+        : ref(buf) {}
 
-    template<typename D> requires std::is_same_v<T, typename D::Layout>
-    BufferRef(const Buffer<D> &buf) : ref(buf) {}
+    template<typename D>
+    requires std::is_same_v<T, typename D::Layout>
+    BufferRef(const Buffer<D> &buf)
+        : ref(buf) {}
 
     const BufferBase &ref;
 };
 
-enum class TextureFormat
-{
+enum class TextureFormat {
     RGBA8,
     R32F,
 };
 
-class TextureBase
-{
+class TextureBase {
 public:
     TextureBase();
     ~TextureBase();
@@ -114,7 +110,7 @@ public:
     TextureBase(TextureBase &&);
 
     TextureBase &operator=(const TextureBase &) = delete;
-    TextureBase &operator=(TextureBase &&);
+    TextureBase &operator                       =(TextureBase &&);
 
 private:
     struct Private;
@@ -124,32 +120,28 @@ private:
 };
 
 template<TextureFormat Format>
-class Texture : public TextureBase
-{
+class Texture : public TextureBase {
 public:
-    Texture() {};
-    Texture(TextureBase &&t) : TextureBase(std::move(t)) {}
+    Texture(){};
+    Texture(TextureBase &&t)
+        : TextureBase(std::move(t)) {}
     ~Texture() { this->~TextureBase(); }
 
-    Texture<Format> &operator=(Texture<Format> &&t)
-    {
+    Texture<Format> &operator=(Texture<Format> &&t) {
         TextureBase::operator=(std::move(t));
         return *this;
     }
 };
 
-class Pipeline
-{
+class Pipeline {
 public:
-    enum class ShaderStage
-    {
-        Vertex = 1,
+    enum class ShaderStage {
+        Vertex   = 1,
         Fragment = 2,
     };
     Q_DECLARE_FLAGS(ShaderStages, ShaderStage);
 
-    enum class VertexInputFormat
-    {
+    enum class VertexInputFormat {
         Float4,
         Float3,
         Float2,
@@ -166,8 +158,7 @@ public:
         SInt2,
         SInt
     };
-    enum class Topology
-    {
+    enum class Topology {
         Triangles,
         TriangleStrip,
         TriangleFan,
@@ -178,7 +169,7 @@ public:
 
     Pipeline();
     Pipeline(const Pipeline &) = delete;
-    Pipeline(Pipeline &&) = default;
+    Pipeline(Pipeline &&)      = default;
     ~Pipeline();
 
     bool isCreated() const;
@@ -202,21 +193,20 @@ private:
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Pipeline::ShaderStages);
 
-class BindingSet
-{
+class BindingSet {
 public:
     BindingSet();
     BindingSet(const BindingSet &) = delete;
     BindingSet(BindingSet &&);
     ~BindingSet();
 
-    void uniformBuffer(int binding, Pipeline::ShaderStages stages, const BufferBase &buffer);
-    void sampledTexture(int binding, Pipeline::ShaderStages stages, const TextureBase &texture);
+    void        uniformBuffer(int binding, Pipeline::ShaderStages stages, const BufferBase &buffer);
+    void        sampledTexture(int binding, Pipeline::ShaderStages stages, const TextureBase &texture);
 
     BindingSet &operator=(const BindingSet &) = delete;
-    BindingSet &operator=(BindingSet &&);
+    BindingSet &operator                      =(BindingSet &&);
 
-    void create();
+    void        create();
 
 private:
     struct Private;
@@ -226,11 +216,11 @@ private:
 };
 
 namespace {
-    template<TextureFormat F> int textureBpp = 4;
+template<TextureFormat F>
+int textureBpp = 4;
 };
 
-class PlotRenderer
-{
+class PlotRenderer {
 public:
     PlotRenderer();
     virtual ~PlotRenderer();
@@ -238,42 +228,39 @@ public:
     virtual void prepare() {}
     virtual void render(const QMatrix4x4 &matrix) = 0;
 
-    QRectF rect() const;
+    QRectF       rect() const;
 
-    QSGNode *sgNode();
+    QSGNode     *sgNode();
 
-    void update(QQuickWindow *window, Plot *plot, const QRect &chartRect, double devicePixelRatio);
+    void         update(QQuickWindow *window, Plot *plot, const QRect &chartRect, double devicePixelRatio);
 
-    void bindPipeline(const Pipeline &pipeline);
+    void         bindPipeline(const Pipeline &pipeline);
     template<typename T>
     void bindPipeline(const T &pipeline) { bindPipeline(pipeline.pipeline()); }
     void bindBindingSet(const BindingSet &set);
     void draw(int count);
 
     template<typename T>
-    Buffer<T> createBuffer(BufferBase::Type type, BufferBase::UsageFlags usage, uint32_t size = 1)
-    {
+    Buffer<T> createBuffer(BufferBase::Type type, BufferBase::UsageFlags usage, uint32_t size = 1) {
         return createBufferBase(type, usage, size * sizeof(T));
     }
 
     template<TextureFormat F>
-    Texture<F> createTexture(QSize size)
-    {
+    Texture<F> createTexture(QSize size) {
         return createTextureBase(F, size);
     }
 
     BindingSet createBindingSet();
 
     template<TextureFormat F>
-    void updateTexture(Texture<F> &tex, const QRect &region, void *data)
-    {
+    void updateTexture(Texture<F> &tex, const QRect &region, void *data) {
         updateTextureBase(tex, region, data, region.width() * region.height() * textureBpp<F>);
     }
 
 private:
-    BufferBase createBufferBase(BufferBase::Type type, BufferBase::UsageFlags usage, uint32_t size);
+    BufferBase  createBufferBase(BufferBase::Type type, BufferBase::UsageFlags usage, uint32_t size);
     TextureBase createTextureBase(TextureFormat f, QSize size);
-    void updateTextureBase(TextureBase &tex, const QRect &region, void *data, uint32_t size);
+    void        updateTextureBase(TextureBase &tex, const QRect &region, void *data, uint32_t size);
 
     struct Private;
     std::unique_ptr<Private> d;
@@ -281,6 +268,6 @@ private:
     friend class Pipeline;
 };
 
-}
+} // namespace chart_qt
 
 #endif

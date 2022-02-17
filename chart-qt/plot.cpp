@@ -1,18 +1,16 @@
 #include "plot.h"
-#include "dataset.h"
 #include "axis.h"
 #include "chartitem.h"
+#include "dataset.h"
 
 namespace chart_qt {
 
-Plot::Plot()
-{
+Plot::Plot() {
 }
 
 Plot::~Plot() = default;
 
-void Plot::setDataSet(DataSet *dataset)
-{
+void Plot::setDataSet(DataSet *dataset) {
     if (m_dataset == dataset) {
         return;
     }
@@ -30,18 +28,15 @@ void Plot::setDataSet(DataSet *dataset)
     }
 }
 
-DataSet *Plot::dataSet() const
-{
+DataSet *Plot::dataSet() const {
     return m_dataset.data();
 }
 
-Axis *Plot::xAxis() const
-{
+Axis *Plot::xAxis() const {
     return m_xAxis;
 }
 
-void Plot::setXAxis(Axis *axis)
-{
+void Plot::setXAxis(Axis *axis) {
     if (m_xAxis == axis) {
         return;
     }
@@ -57,18 +52,15 @@ void Plot::setXAxis(Axis *axis)
     emit xAxisChanged();
 }
 
-void Plot::resetXAxis()
-{
+void Plot::resetXAxis() {
     setXAxis(nullptr);
 }
 
-Axis *Plot::yAxis() const
-{
+Axis *Plot::yAxis() const {
     return m_yAxis;
 }
 
-void Plot::setYAxis(Axis *axis)
-{
+void Plot::setYAxis(Axis *axis) {
     if (m_yAxis == axis) {
         return;
     }
@@ -84,21 +76,17 @@ void Plot::setYAxis(Axis *axis)
     emit yAxisChanged();
 }
 
-void Plot::resetYAxis()
-{
+void Plot::resetYAxis() {
     setYAxis(nullptr);
 }
 
-void Plot::classBegin()
-{
-
+void Plot::classBegin() {
 }
 
-void Plot::componentComplete()
-{
+void Plot::componentComplete() {
     if (auto c = qobject_cast<ChartItem *>(parent())) {
         c->addPlot(this);
     }
 }
 
-}
+} // namespace chart_qt

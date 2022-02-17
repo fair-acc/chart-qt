@@ -2,8 +2,8 @@
 #define PLOT_H
 
 #include <QObject>
-#include <QQmlParserStatus>
 #include <QPointer>
+#include <QQmlParserStatus>
 
 class QSGNode;
 class QQuickWindow;
@@ -14,8 +14,7 @@ class DataSet;
 class Axis;
 class PlotRenderer;
 
-class Plot : public QObject, public QQmlParserStatus
-{
+class Plot : public QObject, public QQmlParserStatus {
     Q_OBJECT
     Q_INTERFACES(QQmlParserStatus)
     Q_PROPERTY(Axis *xAxis READ xAxis WRITE setXAxis NOTIFY xAxisChanged)
@@ -25,22 +24,22 @@ public:
     Plot();
     ~Plot();
 
-    virtual void update(QQuickWindow *window, const QRect &chartRect, double devicePixelRatio, bool paused) = 0;
-    virtual PlotRenderer *renderer() = 0;
+    virtual void          update(QQuickWindow *window, const QRect &chartRect, double devicePixelRatio, bool paused) = 0;
+    virtual PlotRenderer *renderer()                                                                                 = 0;
 
-    void setDataSet(DataSet *dataset);
-    DataSet *dataSet() const;
+    void                  setDataSet(DataSet *dataset);
+    DataSet              *dataSet() const;
 
-    Axis *xAxis() const;
-    void setXAxis(Axis *axis);
+    Axis                 *xAxis() const;
+    void                  setXAxis(Axis *axis);
 
-    Axis *yAxis() const;
-    void setYAxis(Axis *axis);
+    Axis                 *yAxis() const;
+    void                  setYAxis(Axis *axis);
 
-    bool m_needsUpdate = false;
+    bool                  m_needsUpdate = false;
 
-    void classBegin() override;
-    void componentComplete() override;
+    void                  classBegin() override;
+    void                  componentComplete() override;
 
 signals:
     void dataSetChanged();
@@ -49,14 +48,14 @@ signals:
     void yAxisChanged();
 
 private:
-    void resetXAxis();
-    void resetYAxis();
+    void              resetXAxis();
+    void              resetYAxis();
 
     QPointer<DataSet> m_dataset;
-    QPointer<Axis> m_xAxis;
-    QPointer<Axis> m_yAxis;
+    QPointer<Axis>    m_xAxis;
+    QPointer<Axis>    m_yAxis;
 };
 
-}
+} // namespace chart_qt
 
 #endif

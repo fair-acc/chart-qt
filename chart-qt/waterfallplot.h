@@ -7,8 +7,7 @@
 
 namespace chart_qt {
 
-class WaterfallPlot : public Plot
-{
+class WaterfallPlot : public Plot {
     Q_OBJECT
     Q_PROPERTY(double gradientStart READ gradientStart WRITE setGradientStart NOTIFY gradientChanged)
     Q_PROPERTY(double gradientStop READ gradientStop WRITE setGradientStop NOTIFY gradientChanged)
@@ -16,13 +15,13 @@ class WaterfallPlot : public Plot
 public:
     WaterfallPlot();
 
-    double gradientStart() const;
-    void setGradientStart(double g);
+    double        gradientStart() const;
+    void          setGradientStart(double g);
 
-    double gradientStop() const;
-    void setGradientStop(double g);
+    double        gradientStop() const;
+    void          setGradientStop(double g);
 
-    void update(QQuickWindow *window, const QRect &chartRect, double devicePixelRatio, bool paused) override;
+    void          update(QQuickWindow *window, const QRect &chartRect, double devicePixelRatio, bool paused) override;
 
     PlotRenderer *renderer() override;
 
@@ -33,12 +32,12 @@ private:
     class Renderer;
     class Node;
 
-    size_t m_allocated = 0;
-    double m_gradientStart = 0;
-    double m_gradientStop = 0;
+    size_t    m_allocated     = 0;
+    double    m_gradientStart = 0;
+    double    m_gradientStop  = 0;
     Renderer *m_renderer;
 };
 
-}
+} // namespace chart_qt
 
 #endif

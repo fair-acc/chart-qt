@@ -45,6 +45,6 @@ private:
     std::vector<Field> m_fields;
 };
 
-}
+} // namespace ChartQtSample
 
 #endif // TESTNETWORKMODEL_H

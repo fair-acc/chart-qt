@@ -2,8 +2,7 @@
 
 namespace chart_qt {
 
-DataSet::~DataSet()
-{
+DataSet::~DataSet() {
 }
 
-}
+} // namespace chart_qt
