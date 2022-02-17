@@ -2,12 +2,7 @@ function(add_pipelines)
     include(CMakeParseArguments)
     cmake_parse_arguments(PIP "" "TARGET" "SHADERS;FILES" ${ARGN})
 
-    qt6_add_shaders(${PIP_TARGET} "shaders" PREFIX "/" FILES shaders/xyplot_float.vert
-                      shaders/xyplot_float.frag
-                      shaders/xyplot_errorbars.vert
-                      shaders/xyplot_errorbars.frag
-                      shaders/waterfall.vert
-                      shaders/waterfall.frag)
+    qt6_add_shaders(${PIP_TARGET} "shaders" PREFIX "/" FILES ${PIP_SHADERS})
 
     foreach(s ${PIP_SHADERS})
         list(APPEND built_shaders .qsb/${s}.qsb)
