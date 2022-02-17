@@ -14,26 +14,20 @@ ExternalProject_Add(pipegen
                     CMAKE_ARGS
                         "-DCMAKE_PREFIX_PATH=${QT_HOST_PATH}")
 
-# This shaders library is to make sure the shaders get compiled before
-# the pipegen tool needs them
-# A source file is needed so create an empty one
-file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/shaders_dummy.cpp "")
-qt_add_library(shaders STATIC ${CMAKE_CURRENT_BINARY_DIR}/shaders_dummy.cpp)
-qt6_add_shaders(shaders "shaders" PREFIX "/" FILES
-    "shaders/xyplot_float.vert"
-    "shaders/xyplot_float.frag"
-    "shaders/xyplot_errorbars.vert"
-    "shaders/xyplot_errorbars.frag"
-    "shaders/waterfall.vert"
-    "shaders/waterfall.frag"
-)
-
 function(add_pipelines)
-    set(singleValues TARGET)
-    set(multiValues SOURCES FILES)
-
     include(CMakeParseArguments)
-    cmake_parse_arguments(PIP "" "TARGET" "FILES" ${ARGN})
+    cmake_parse_arguments(PIP "" "TARGET" "SHADERS;FILES" ${ARGN})
+
+    qt6_add_shaders(${PIP_TARGET} "shaders" PREFIX "/" FILES shaders/xyplot_float.vert
+                      shaders/xyplot_float.frag
+                      shaders/xyplot_errorbars.vert
+                      shaders/xyplot_errorbars.frag
+                      shaders/waterfall.vert
+                      shaders/waterfall.frag)
+
+    foreach(s ${PIP_SHADERS})
+        list(APPEND built_shaders .qsb/${s}.qsb)
+    endforeach()
 
     foreach(f ${PIP_FILES})
         set(file ${CMAKE_CURRENT_SOURCE_DIR}/${f})
@@ -42,7 +36,7 @@ function(add_pipelines)
         add_custom_command(OUTPUT ${out}.cpp ${out}.h
                    COMMAND pipegen/pipegen ARGS ${file} -s ${CMAKE_CURRENT_BINARY_DIR}/.qsb/
                    MAIN_DEPENDENCY ${file}
-                   DEPENDS pipegen
+                   DEPENDS pipegen ${built_shaders}
                    COMMENT "Generating pipeline class for ${f}"
                    VERBATIM)
         target_sources(${PIP_TARGET} PRIVATE ${out}.cpp ${out}.h)
@@ -72,6 +66,12 @@ qt6_add_shaders(chart-qt "qqshaders" PREFIX "/"  BATCHABLE FILES
 )
 
 add_pipelines(TARGET chart-qt
+              SHADERS shaders/xyplot_float.vert
+                      shaders/xyplot_float.frag
+                      shaders/xyplot_errorbars.vert
+                      shaders/xyplot_errorbars.frag
+                      shaders/waterfall.vert
+                      shaders/waterfall.frag
               FILES shaders/xyplotpipeline.json
                     shaders/errorbarspipeline.json
                     shaders/waterfallpipeline.json)
@@ -89,4 +89,4 @@ target_include_directories(chart-qt PRIVATE ${Qt6Gui_PRIVATE_INCLUDE_DIRS})
 target_include_directories(chart-qt PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(chart-qt PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(chart-qt PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/function_ref/include)
-target_link_libraries(chart-qt PUBLIC Qt6::Quick shaders)
+target_link_libraries(chart-qt PUBLIC Qt6::Quick)
