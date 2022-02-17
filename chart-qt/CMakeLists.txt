@@ -15,6 +15,9 @@ ExternalProject_Add(pipegen
                         "-DCMAKE_PREFIX_PATH=${QT_HOST_PATH}")
 include(pipegen/pipegen.cmake)
 
+FetchContent_Declare(function_ref GIT_REPOSITORY https://github.com/TartanLlama/function_ref.git)
+FetchContent_Populate(function_ref)
+
 set(SOURCES chartitem.cpp
             axis.cpp
             dataset.cpp
@@ -60,5 +63,5 @@ endif()
 target_include_directories(chart-qt PRIVATE ${Qt6Gui_PRIVATE_INCLUDE_DIRS})
 target_include_directories(chart-qt PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(chart-qt PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(chart-qt PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/function_ref/include)
+target_include_directories(chart-qt PUBLIC ${function_ref_SOURCE_DIR}/include)
 target_link_libraries(chart-qt PUBLIC Qt6::Quick)

@@ -1,6 +1,0 @@
-[submodule "3rdparty/sanitizers-cmake"]
-	path = 3rdparty/sanitizers-cmake
-	url = git://github.com/arsenm/sanitizers-cmake.git
-[submodule "3rdparty/function_ref"]
-	path = 3rdparty/function_ref
-	url = https://github.com/TartanLlama/function_ref.git

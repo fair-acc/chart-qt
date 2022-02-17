@@ -5,7 +5,12 @@ if(WASM)
     include(cmake/wasm.cmake)
 endif()
 
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/3rdparty/sanitizers-cmake/cmake" ${CMAKE_MODULE_PATH})
+include(FetchContent)
+
+FetchContent_Declare(sanitizers GIT_REPOSITORY https://github.com/arsenm/sanitizers-cmake.git)
+FetchContent_Populate(sanitizers)
+
+set(CMAKE_MODULE_PATH "${sanitizers_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 find_package(Sanitizers)
 
 add_subdirectory(chart-qt)
