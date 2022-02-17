@@ -31,8 +31,8 @@ Q_SIGNALS:
     void orientationChanged();
 
 private:
-    std::vector<ChartItem *> m_charts;
-    Qt::Orientation          m_orientation = Qt::Horizontal;
+    std::vector<ChartItem *> _charts;
+    Qt::Orientation          _orientation = Qt::Horizontal;
 };
 
 } // namespace chart_qt

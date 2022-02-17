@@ -90,7 +90,7 @@ public:
     };
 
     AxisNode(ChartItem::AxisLayout *layout)
-        : m_layout(layout) {
+        : _layout(layout) {
         auto geo = new QSGGeometry(QSGGeometry::defaultAttributes_ColoredPoint2D(), 0);
         geo->setDrawingMode(QSGGeometry::DrawLines);
         geo->setVertexDataPattern(QSGGeometry::DynamicPattern);
@@ -104,39 +104,39 @@ public:
     void update() {
         auto geo = geometry();
 
-        if (m_layout->needsUpdate) {
-            const int numPoints = (1 + m_layout->majorLines.size() + m_layout->minorLines.size()) * 2;
+        if (_layout->needsUpdate) {
+            const int numPoints = (1 + _layout->majorLines.size() + _layout->minorLines.size()) * 2;
             if (geo->vertexCount() != numPoints) {
                 geo->allocate(numPoints);
             }
 
             auto data = geo->vertexDataAsColoredPoint2D();
-            data[0].set(m_layout->axisLine.x1(), m_layout->axisLine.y1(), 0, 0, 0, 0xff);
-            data[1].set(m_layout->axisLine.x2(), m_layout->axisLine.y2(), 0, 0, 0, 0xff);
+            data[0].set(_layout->axisLine.x1(), _layout->axisLine.y1(), 0, 0, 0, 0xff);
+            data[1].set(_layout->axisLine.x2(), _layout->axisLine.y2(), 0, 0, 0, 0xff);
 
             data += 2;
-            for (int i = 0; i < m_layout->majorLines.size(); ++i) {
-                const auto &l = m_layout->majorLines[i];
+            for (int i = 0; i < _layout->majorLines.size(); ++i) {
+                const auto &l = _layout->majorLines[i];
                 data[0].set(l.x1(), l.y1(), 0xbb, 0xbb, 0xbb, 0xff);
                 data[1].set(l.x2(), l.y2(), 0xbb, 0xbb, 0xbb, 0xff);
                 data += 2;
             }
 
-            for (int i = 0; i < m_layout->minorLines.size(); ++i) {
-                const auto &l = m_layout->minorLines[i];
+            for (int i = 0; i < _layout->minorLines.size(); ++i) {
+                const auto &l = _layout->minorLines[i];
                 data[0].set(l.x1(), l.y1(), 0x80, 0x80, 0x80, 0xff);
                 data[1].set(l.x2(), l.y2(), 0x80, 0x80, 0x80, 0xff);
                 data += 2;
             }
 
-            m_layout->needsUpdate = false;
+            _layout->needsUpdate = false;
             geo->markVertexDataDirty();
 
             markDirty(QSGNode::DirtyGeometry);
         }
     }
 
-    ChartItem::AxisLayout *m_layout;
+    ChartItem::AxisLayout *_layout;
 };
 
 ChartItem::ChartItem(QQuickItem *parent)
@@ -150,8 +150,8 @@ ChartItem::~ChartItem() {
 }
 
 void ChartItem::addPlot(Plot *plot) {
-    m_plotsToInit.push_back(plot);
-    m_plots.push_back(plot);
+    _plotsToInit.push_back(plot);
+    _plots.push_back(plot);
 
     connect(plot, &Plot::updateNeeded, this, &QQuickItem::update);
 
@@ -159,9 +159,9 @@ void ChartItem::addPlot(Plot *plot) {
 }
 
 void ChartItem::addAxis(Axis *axis) {
-    m_axes.push_back(std::make_unique<AxisLayout>(this, axis));
-    m_addedAxes.push_back(axis);
-    auto a = m_axes.back().get();
+    _axes.push_back(std::make_unique<AxisLayout>(this, axis));
+    _addedAxes.push_back(axis);
+    auto a = _axes.back().get();
     connect(axis, &Axis::minChanged, this, [this, a]() {
         a->dirty = true;
         polish();
@@ -174,18 +174,18 @@ void ChartItem::addAxis(Axis *axis) {
 }
 
 bool ChartItem::paused() const {
-    return m_paused;
+    return _paused;
 }
 
 void ChartItem::setPaused(bool p) {
-    if (m_paused != p) {
-        m_paused = p;
+    if (_paused != p) {
+        _paused = p;
         emit pausedChanged();
     }
 }
 
 const std::vector<Axis *> &ChartItem::axes() const {
-    return m_addedAxes;
+    return _addedAxes;
 }
 
 void ChartItem::componentComplete() {
@@ -198,7 +198,7 @@ void ChartItem::geometryChange(const QRectF &newGeometry, const QRectF &oldGeome
 
     const bool wchanged = newGeometry.width() != oldGeometry.width();
     const bool hchanged = newGeometry.height() != oldGeometry.height();
-    for (auto &a : m_axes) {
+    for (auto &a : _axes) {
         bool h = a->isHorizontal();
         if ((h && wchanged) || (!h && hchanged)) {
             a->dirty = true;
@@ -216,7 +216,7 @@ void ChartItem::updateAxesRect() {
     int  bottomMargin = 0;
 
     bool crectChanged = false;
-    for (auto &a : m_axes) {
+    for (auto &a : _axes) {
         double w;
         if (a->dirty) {
             crectChanged = true;
@@ -272,7 +272,7 @@ void ChartItem::updateAxesRect() {
 
 void ChartItem::updatePolish() {
     updateAxesRect();
-    for (auto &a : m_axes) {
+    for (auto &a : _axes) {
         const auto findSubdivision = [](double range) {
             const double multiplier = pow(10, floor(log10(range)));
             double       firstDigit = trunc(range / multiplier);
@@ -403,7 +403,7 @@ QSGNode *ChartItem::updatePaintNode(QSGNode *node, UpdatePaintNodeData *) {
         node->appendChildNode(window()->createRectangleNode());
     }
 
-    for (auto &a : m_axes) {
+    for (auto &a : _axes) {
         if (!a->node) {
             a->node = new AxisNode(a.get());
             node->insertChildNodeAfter(a->node, node->firstChild());
@@ -418,14 +418,14 @@ QSGNode *ChartItem::updatePaintNode(QSGNode *node, UpdatePaintNodeData *) {
     auto plotsParentNode = node->firstChild();
     static_cast<QSGTransformNode *>(plotsParentNode)->setMatrix(matrix);
 
-    for (auto p : m_plotsToInit) {
+    for (auto p : _plotsToInit) {
         plotsParentNode->appendChildNode(p->renderer()->sgNode());
     }
-    m_plotsToInit.clear();
+    _plotsToInit.clear();
 
     auto rect = mapRectToScene(crect).toRect();
 
-    for (auto p : m_plots) {
+    for (auto p : _plots) {
         p->update(window(), rect, window()->effectiveDevicePixelRatio(), false);
         p->renderer()->update(window(), p, rect, window()->effectiveDevicePixelRatio());
     }
@@ -434,8 +434,8 @@ QSGNode *ChartItem::updatePaintNode(QSGNode *node, UpdatePaintNodeData *) {
 
 QRectF ChartItem::contentRect() const {
     auto crect = implicitContentRect();
-    if (!m_minimumMargins.isNull()) {
-        auto r = QRectF(0, 0, width(), height()).marginsRemoved(m_minimumMargins);
+    if (!_minimumMargins.isNull()) {
+        auto r = QRectF(0, 0, width(), height()).marginsRemoved(_minimumMargins);
         return crect.intersected(r);
     }
     return crect;
@@ -446,7 +446,7 @@ QRectF ChartItem::implicitContentRect() const {
     int rightMargin  = 0;
     int topMargin    = 0;
     int bottomMargin = 0;
-    for (auto &a : m_axes) {
+    for (auto &a : _axes) {
         switch (a->axis->position()) {
         case Axis::Position::Left:
             leftMargin += a->rect.width();
@@ -466,7 +466,7 @@ QRectF ChartItem::implicitContentRect() const {
 }
 
 QRectF ChartItem::axisRect(Axis *axis) const {
-    for (auto &a : m_axes) {
+    for (auto &a : _axes) {
         if (a->axis == axis) {
             return a->rect;
         }
@@ -480,28 +480,28 @@ void ChartItem::zoomIn(QRectF area) {
         return;
     }
 
-    for (auto &a : m_axes) {
+    for (auto &a : _axes) {
         const auto   range         = a->axis->max() - a->axis->min();
         const bool   horiz         = a->isHorizontal();
 
-        const double fullPixelSize = horiz ? (width() - 2. * m_verticalMargin) : (height() - 2. * m_horizontalMargin);
+        const double fullPixelSize = horiz ? (width() - 2. * _verticalMargin) : (height() - 2. * _horizontalMargin);
 
-        double       min           = horiz ? area.x() - m_verticalMargin : area.y() - m_horizontalMargin;
-        double       max           = horiz ? area.right() - m_verticalMargin : area.bottom() - m_horizontalMargin;
+        double       min           = horiz ? area.x() - _verticalMargin : area.y() - _horizontalMargin;
+        double       max           = horiz ? area.right() - _verticalMargin : area.bottom() - _horizontalMargin;
         if (a->axis->isRightToLeftOrBottomToTop()) {
-            min = horiz ? width() - m_verticalMargin - area.right() : height() - m_horizontalMargin - area.bottom();
-            max = horiz ? width() - m_verticalMargin - area.x() : height() - m_horizontalMargin - area.y();
+            min = horiz ? width() - _verticalMargin - area.right() : height() - _horizontalMargin - area.bottom();
+            max = horiz ? width() - _verticalMargin - area.x() : height() - _horizontalMargin - area.y();
         }
 
         a->axis->setMax(a->axis->min() + range * max / fullPixelSize);
         a->axis->setMin(a->axis->min() + range * min / fullPixelSize);
     }
 
-    m_zoomHistory.push(area);
+    _zoomHistory.push(area);
 }
 
 void ChartItem::setMinimumContentMargins(const QMarginsF &margins) {
-    m_minimumMargins = margins;
+    _minimumMargins = margins;
     polish();
 }
 
@@ -511,16 +511,16 @@ void ChartItem::zoomOut(QRectF area) {
         return;
     }
 
-    for (auto &a : m_axes) {
+    for (auto &a : _axes) {
         const auto   range         = a->axis->max() - a->axis->min();
         const bool   horiz         = a->isHorizontal();
         const double fullPixelSize = horiz ? area.width() : area.height();
 
-        double       min           = horiz ? -area.x() + m_verticalMargin : -area.y() + m_horizontalMargin;
-        double       max           = horiz ? width() - m_verticalMargin - area.x() : height() - 2. * m_horizontalMargin - area.y();
+        double       min           = horiz ? -area.x() + _verticalMargin : -area.y() + _horizontalMargin;
+        double       max           = horiz ? width() - _verticalMargin - area.x() : height() - 2. * _horizontalMargin - area.y();
         if (a->axis->isRightToLeftOrBottomToTop()) {
-            min = horiz ? m_horizontalMargin - (width() - area.right()) : m_horizontalMargin - (height() - area.bottom());
-            max = horiz ? 0 : area.bottom() - m_horizontalMargin;
+            min = horiz ? _horizontalMargin - (width() - area.right()) : _horizontalMargin - (height() - area.bottom());
+            max = horiz ? 0 : area.bottom() - _horizontalMargin;
         }
 
         a->axis->setMax(a->axis->min() + range * max / fullPixelSize);
@@ -529,9 +529,9 @@ void ChartItem::zoomOut(QRectF area) {
 }
 
 void ChartItem::undoZoom() {
-    if (!m_zoomHistory.empty()) {
-        zoomOut(m_zoomHistory.top());
-        m_zoomHistory.pop();
+    if (!_zoomHistory.empty()) {
+        zoomOut(_zoomHistory.top());
+        _zoomHistory.pop();
     }
 }
 

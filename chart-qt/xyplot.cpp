@@ -22,50 +22,50 @@ namespace chart_qt {
 class XYPlot::XYRenderer final : public PlotRenderer {
 public:
     void init() {
-        m_pipeline.setTopology(Pipeline::Topology::LineStrip);
-        m_pipeline.create(this);
+        _pipeline.setTopology(Pipeline::Topology::LineStrip);
+        _pipeline.create(this);
 
-        m_xBuffer    = createBuffer<XYPlotPipeline::Vx>(BufferBase::Type::Dynamic, BufferBase::UsageFlag::VertexBuffer, m_dataCount);
-        m_yBuffer    = createBuffer<XYPlotPipeline::Vy>(BufferBase::Type::Dynamic, BufferBase::UsageFlag::VertexBuffer, m_dataCount);
-        m_ubuf       = createBuffer<XYPlotPipeline::Ubo>(BufferBase::Type::Dynamic, BufferBase::UsageFlag::UniformBuffer);
+        _xBuffer    = createBuffer<XYPlotPipeline::Vx>(BufferBase::Type::Dynamic, BufferBase::UsageFlag::VertexBuffer, _dataCount);
+        _yBuffer    = createBuffer<XYPlotPipeline::Vy>(BufferBase::Type::Dynamic, BufferBase::UsageFlag::VertexBuffer, _dataCount);
+        _ubuf       = createBuffer<XYPlotPipeline::Ubo>(BufferBase::Type::Dynamic, BufferBase::UsageFlag::UniformBuffer);
 
-        m_bindingSet = m_pipeline.createBindingSet(this, XYPlotPipeline::Bindings{
-                                                                 .ubuf = m_ubuf });
+        _bindingSet = _pipeline.createBindingSet(this, XYPlotPipeline::Bindings{
+                                                               .ubuf = _ubuf });
 
-        m_pipeline.setVxInputBuffer(m_xBuffer);
-        m_pipeline.setVyInputBuffer(m_yBuffer);
+        _pipeline.setVxInputBuffer(_xBuffer);
+        _pipeline.setVyInputBuffer(_yBuffer);
 
-        m_errorBarsPipeline.setTopology(Pipeline::Topology::Lines);
-        m_errorBarsPipeline.create(this);
+        _errorBarsPipeline.setTopology(Pipeline::Topology::Lines);
+        _errorBarsPipeline.create(this);
 
-        m_errorBarsBuffer     = createBuffer<ErrorBarsPipeline::Pos>(BufferBase::Type::Dynamic, BufferBase::UsageFlag::VertexBuffer, m_dataCount * 2);
-        m_errorBarsBindingSet = m_errorBarsPipeline.createBindingSet(this, { .ubuf = m_ubuf });
+        _errorBarsBuffer     = createBuffer<ErrorBarsPipeline::Pos>(BufferBase::Type::Dynamic, BufferBase::UsageFlag::VertexBuffer, _dataCount * 2);
+        _errorBarsBindingSet = _errorBarsPipeline.createBindingSet(this, { .ubuf = _ubuf });
 
-        m_errorBarsPipeline.setPosInputBuffer(m_errorBarsBuffer);
+        _errorBarsPipeline.setPosInputBuffer(_errorBarsBuffer);
     }
 
     void needsUpdate(DataSet *ds) {
-        m_dataset = ds;
+        _dataset = ds;
     }
 
     void updateData() {
-        const int  dataCount = m_dataset->getDataCount();
+        const int  dataCount = _dataset->getDataCount();
 
-        const auto xdata     = m_dataset->getValues(0).data();
-        const auto ydata     = m_dataset->getValues(1).data();
+        const auto xdata     = _dataset->getValues(0).data();
+        const auto ydata     = _dataset->getValues(1).data();
 
-        m_xBuffer.update([=](auto *data) {
+        _xBuffer.update([=](auto *data) {
             memcpy(data, xdata, dataCount * sizeof(float));
         });
-        m_yBuffer.update([=](auto *data) {
+        _yBuffer.update([=](auto *data) {
             memcpy(data, ydata, dataCount * sizeof(float));
         });
 
-        if (m_dataset->hasErrors) {
-            const auto yPosErrors = m_dataset->getPositiveErrors(1).data();
-            const auto yNegErrors = m_dataset->getNegativeErrors(1).data();
+        if (_dataset->hasErrors) {
+            const auto yPosErrors = _dataset->getPositiveErrors(1).data();
+            const auto yNegErrors = _dataset->getNegativeErrors(1).data();
 
-            m_errorBarsBuffer.update([=](auto *data) {
+            _errorBarsBuffer.update([=](auto *data) {
                 for (int i = 0; i < dataCount; ++i) {
                     data[2 * i].pos     = QVector2D(xdata[i], ydata[i] - yPosErrors[i]);
                     data[2 * i + 1].pos = QVector2D(xdata[i], ydata[i] + yNegErrors[i]);
@@ -73,67 +73,67 @@ public:
             });
         }
 
-        m_dataset = nullptr;
+        _dataset = nullptr;
     }
 
     void prepare() final {
-        auto dataCount = m_dataCount;
-        if (m_dataset) {
-            dataCount = m_dataset->getDataCount();
+        auto dataCount = _dataCount;
+        if (_dataset) {
+            dataCount = _dataset->getDataCount();
         }
 
-        if (!m_pipeline.isCreated()) {
-            m_dataCount = dataCount;
+        if (!_pipeline.isCreated()) {
+            _dataCount = dataCount;
             init();
-        } else if (m_dataCount != dataCount) {
-            m_dataCount = dataCount;
+        } else if (_dataCount != dataCount) {
+            _dataCount = dataCount;
             // TODO resize buffers
         }
 
-        if (m_dataset) {
+        if (_dataset) {
             updateData();
         }
     }
 
     void render(const QMatrix4x4 &matrix) final {
-        m_ubuf.update([&](XYPlotPipeline::Ubo *data) {
-            auto m = matrix * m_matrix;
+        _ubuf.update([&](XYPlotPipeline::Ubo *data) {
+            auto m = matrix * _matrix;
             memcpy(data->qt_Matrix.data(), m.data(), 64);
         });
 
-        bindPipeline(m_errorBarsPipeline);
-        bindBindingSet(m_errorBarsBindingSet);
-        draw(m_dataCount * 2);
+        bindPipeline(_errorBarsPipeline);
+        bindBindingSet(_errorBarsBindingSet);
+        draw(_dataCount * 2);
 
-        bindPipeline(m_pipeline);
-        bindBindingSet(m_bindingSet);
-        draw(m_dataCount);
+        bindPipeline(_pipeline);
+        bindBindingSet(_bindingSet);
+        draw(_dataCount);
     }
 
-    XYPlotPipeline                 m_pipeline;
-    size_t                         m_dataCount = 0;
-    Buffer<XYPlotPipeline::Vx>     m_xBuffer;
-    Buffer<XYPlotPipeline::Vy>     m_yBuffer;
-    Buffer<XYPlotPipeline::Ubo>    m_ubuf;
-    BindingSet                     m_bindingSet;
+    XYPlotPipeline                 _pipeline;
+    size_t                         _dataCount = 0;
+    Buffer<XYPlotPipeline::Vx>     _xBuffer;
+    Buffer<XYPlotPipeline::Vy>     _yBuffer;
+    Buffer<XYPlotPipeline::Ubo>    _ubuf;
+    BindingSet                     _bindingSet;
 
-    ErrorBarsPipeline              m_errorBarsPipeline;
-    Buffer<ErrorBarsPipeline::Pos> m_errorBarsBuffer;
-    BindingSet                     m_errorBarsBindingSet;
+    ErrorBarsPipeline              _errorBarsPipeline;
+    Buffer<ErrorBarsPipeline::Pos> _errorBarsBuffer;
+    BindingSet                     _errorBarsBindingSet;
 
-    DataSet                       *m_dataset = nullptr;
-    QMatrix4x4                     m_matrix;
+    DataSet                       *_dataset = nullptr;
+    QMatrix4x4                     _matrix;
 };
 
 XYPlot::XYPlot() {
 }
 
 PlotRenderer *XYPlot::renderer() {
-    if (!m_renderer) {
-        m_renderer            = new XYRenderer;
-        m_renderer->m_dataset = dataSet();
+    if (!_renderer) {
+        _renderer           = new XYRenderer;
+        _renderer->_dataset = dataSet();
     }
-    return m_renderer;
+    return _renderer;
 }
 
 void XYPlot::update(QQuickWindow *window, const QRect &chartRect, double devicePixelRatio, bool paused) {
@@ -152,11 +152,11 @@ void XYPlot::update(QQuickWindow *window, const QRect &chartRect, double deviceP
     double ytr = ya ? (yinv ? -ya->max() : -ya->min()) : 0;
     m.translate(xtr, ytr);
 
-    m_renderer->m_matrix = m;
-    if (m_needsUpdate && !paused) {
-        m_needsUpdate         = false;
+    _renderer->_matrix = m;
+    if (needsUpdate() && !paused) {
+        resetNeedsUpdate();
 
-        m_renderer->m_dataset = dataSet();
+        _renderer->_dataset = dataSet();
     }
 }
 

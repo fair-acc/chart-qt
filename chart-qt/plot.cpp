@@ -11,42 +11,42 @@ Plot::Plot() {
 Plot::~Plot() = default;
 
 void Plot::setDataSet(DataSet *dataset) {
-    if (m_dataset == dataset) {
+    if (_dataset == dataset) {
         return;
     }
 
-    if (m_dataset) {
+    if (_dataset) {
         disconnect(dataset, &DataSet::dataChanged, this, &Plot::updateNeeded);
     }
 
-    m_dataset = dataset;
+    _dataset = dataset;
     emit dataSetChanged();
 
     if (dataset) {
         connect(dataset, &DataSet::dataChanged, this, &Plot::updateNeeded);
-        connect(dataset, &DataSet::dataChanged, this, [this]() { m_needsUpdate = true; });
+        connect(dataset, &DataSet::dataChanged, this, [this]() { _needsUpdate = true; });
     }
 }
 
 DataSet *Plot::dataSet() const {
-    return m_dataset.data();
+    return _dataset.data();
 }
 
 Axis *Plot::xAxis() const {
-    return m_xAxis;
+    return _xAxis;
 }
 
 void Plot::setXAxis(Axis *axis) {
-    if (m_xAxis == axis) {
+    if (_xAxis == axis) {
         return;
     }
 
-    if (m_xAxis) {
-        disconnect(m_xAxis, &QObject::destroyed, this, &Plot::resetXAxis);
+    if (_xAxis) {
+        disconnect(_xAxis, &QObject::destroyed, this, &Plot::resetXAxis);
     }
-    m_xAxis = axis;
-    if (m_xAxis) {
-        connect(m_xAxis, &QObject::destroyed, this, &Plot::resetXAxis);
+    _xAxis = axis;
+    if (_xAxis) {
+        connect(_xAxis, &QObject::destroyed, this, &Plot::resetXAxis);
     }
 
     emit xAxisChanged();
@@ -57,20 +57,20 @@ void Plot::resetXAxis() {
 }
 
 Axis *Plot::yAxis() const {
-    return m_yAxis;
+    return _yAxis;
 }
 
 void Plot::setYAxis(Axis *axis) {
-    if (m_yAxis == axis) {
+    if (_yAxis == axis) {
         return;
     }
 
-    if (m_yAxis) {
-        disconnect(m_yAxis, &QObject::destroyed, this, &Plot::resetXAxis);
+    if (_yAxis) {
+        disconnect(_yAxis, &QObject::destroyed, this, &Plot::resetXAxis);
     }
-    m_yAxis = axis;
-    if (m_yAxis) {
-        connect(m_yAxis, &QObject::destroyed, this, &Plot::resetXAxis);
+    _yAxis = axis;
+    if (_yAxis) {
+        connect(_yAxis, &QObject::destroyed, this, &Plot::resetXAxis);
     }
 
     emit yAxisChanged();

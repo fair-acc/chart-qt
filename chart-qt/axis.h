@@ -73,12 +73,12 @@ signals:
 private:
     void           createDefaultLabelDelegate();
 
-    Position       m_position             = {};
-    Direction      m_direction            = {};
-    double         m_min                  = 0;
-    double         m_max                  = 1;
-    QQmlComponent *m_labelDelegate        = nullptr;
-    QQmlComponent *m_defaultLabelDelegate = nullptr;
+    Position       _position             = {};
+    Direction      _direction            = {};
+    double         _min                  = 0;
+    double         _max                  = 1;
+    QQmlComponent *_labelDelegate        = nullptr;
+    QQmlComponent *_defaultLabelDelegate = nullptr;
 };
 
 } // namespace chart_qt

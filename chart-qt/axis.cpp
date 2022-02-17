@@ -12,56 +12,56 @@ Axis::Axis(QObject *parent)
 }
 
 double Axis::min() const {
-    return m_min;
+    return _min;
 }
 
 void Axis::setMin(double m) {
-    if (m_min != m) {
-        m_min = m;
+    if (_min != m) {
+        _min = m;
         emit minChanged();
     }
 }
 
 double Axis::max() const {
-    return m_max;
+    return _max;
 }
 
 void Axis::setMax(double m) {
-    if (m_max != m) {
-        m_max = m;
+    if (_max != m) {
+        _max = m;
         emit maxChanged();
     }
 }
 
 Axis::Position Axis::position() const {
-    return m_position;
+    return _position;
 }
 
 void Axis::setPosition(Axis::Position p) {
-    if (m_position != p) {
-        m_position = p;
+    if (_position != p) {
+        _position = p;
         emit positionChanged();
     }
 }
 
 Axis::Direction Axis::direction() const {
-    return m_direction;
+    return _direction;
 }
 
 void Axis::setDirection(Direction dir) {
-    if (m_direction != dir) {
-        m_direction = dir;
+    if (_direction != dir) {
+        _direction = dir;
         emit directionChanged();
     }
 }
 
 QQmlComponent *Axis::labelDelegate() const {
-    return m_labelDelegate;
+    return _labelDelegate;
 }
 
 void Axis::setLabelDelegate(QQmlComponent *comp) {
-    if (m_labelDelegate != comp) {
-        m_labelDelegate = comp;
+    if (_labelDelegate != comp) {
+        _labelDelegate = comp;
         emit labelDelegateChanged();
     }
 }
@@ -76,22 +76,22 @@ void Axis::componentComplete() {
 }
 
 void Axis::createDefaultLabelDelegate() {
-    m_defaultLabelDelegate          = new QQmlComponent(qmlEngine(this));
+    _defaultLabelDelegate           = new QQmlComponent(qmlEngine(this));
     static const QByteArray qmlCode = "import QtQuick 2.0\n Text{}";
-    m_defaultLabelDelegate->setData(qmlCode, {});
+    _defaultLabelDelegate->setData(qmlCode, {});
 }
 
 QQuickItem *Axis::createLabel() {
     QQmlComponent *delegate;
     QQmlContext   *context;
-    if (!m_labelDelegate) {
-        if (!m_defaultLabelDelegate) {
+    if (!_labelDelegate) {
+        if (!_defaultLabelDelegate) {
             createDefaultLabelDelegate();
         }
-        delegate = m_defaultLabelDelegate;
+        delegate = _defaultLabelDelegate;
         context  = QQmlEngine::contextForObject(this);
     } else {
-        delegate = m_labelDelegate;
+        delegate = _labelDelegate;
         context  = delegate->creationContext();
     }
 
@@ -112,15 +112,15 @@ QQuickItem *Axis::createLabel() {
 }
 
 void Axis::zoom(double m, double anchorPoint) {
-    double max = anchorPoint + (m_max - anchorPoint) / m;
-    double min = anchorPoint + (m_min - anchorPoint) / m;
+    double max = anchorPoint + (_max - anchorPoint) / m;
+    double min = anchorPoint + (_min - anchorPoint) / m;
     setMin(min);
     setMax(max);
 }
 
 bool Axis::isRightToLeftOrBottomToTop() const {
-    const bool horiz = m_position == Axis::Position::Top || m_position == Axis::Position::Bottom;
-    return (horiz && m_direction == Axis::Direction::RightToLeft) || (!horiz && m_direction == Axis::Direction::BottomToTop);
+    const bool horiz = _position == Axis::Position::Top || _position == Axis::Position::Bottom;
+    return (horiz && _direction == Axis::Direction::RightToLeft) || (!horiz && _direction == Axis::Direction::BottomToTop);
 }
 
 } // namespace chart_qt

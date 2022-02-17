@@ -36,7 +36,8 @@ public:
     Axis                 *yAxis() const;
     void                  setYAxis(Axis *axis);
 
-    bool                  m_needsUpdate = false;
+    bool                  needsUpdate() { return _needsUpdate; }
+    void                  resetNeedsUpdate() { _needsUpdate = false; }
 
     void                  classBegin() override;
     void                  componentComplete() override;
@@ -51,9 +52,10 @@ private:
     void              resetXAxis();
     void              resetYAxis();
 
-    QPointer<DataSet> m_dataset;
-    QPointer<Axis>    m_xAxis;
-    QPointer<Axis>    m_yAxis;
+    QPointer<DataSet> _dataset;
+    QPointer<Axis>    _xAxis;
+    QPointer<Axis>    _yAxis;
+    bool              _needsUpdate = false;
 };
 
 } // namespace chart_qt

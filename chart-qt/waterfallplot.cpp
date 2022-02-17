@@ -16,47 +16,47 @@ static constexpr int          TexHeight = 500;
 class WaterfallPlot::Renderer final : public PlotRenderer {
 public:
     void init() {
-        m_pipeline.setTopology(Pipeline::Topology::TriangleStrip);
-        m_pipeline.create(this);
+        _pipeline.setTopology(Pipeline::Topology::TriangleStrip);
+        _pipeline.create(this);
 
-        m_buffer     = createBuffer<WaterfallPipeline::Vertex>(BufferBase::Type::Dynamic, BufferBase::UsageFlag::VertexBuffer, 4);
-        m_ubuf       = createBuffer<WaterfallPipeline::Ubo>(BufferBase::Type::Dynamic, BufferBase::UsageFlag::UniformBuffer);
-        m_texture    = createTexture<TextureFormat::R32F>({ 10000, TexHeight });
+        _buffer     = createBuffer<WaterfallPipeline::Vertex>(BufferBase::Type::Dynamic, BufferBase::UsageFlag::VertexBuffer, 4);
+        _ubuf       = createBuffer<WaterfallPipeline::Ubo>(BufferBase::Type::Dynamic, BufferBase::UsageFlag::UniformBuffer);
+        _texture    = createTexture<TextureFormat::R32F>({ 10000, TexHeight });
 
-        m_bindingSet = m_pipeline.createBindingSet(this, { .ubuf      = m_ubuf,
-                                                                 .tex = m_texture });
+        _bindingSet = _pipeline.createBindingSet(this, { .ubuf      = _ubuf,
+                                                               .tex = _texture });
 
-        m_pipeline.setVertexInputBuffer(m_buffer);
+        _pipeline.setVertexInputBuffer(_buffer);
     }
 
     void needsUpdate(DataSet *ds) {
-        m_dataset = ds;
+        _dataset = ds;
     }
 
     void updateData() {
-        const int  dataCount = m_dataset->getDataCount();
-        const auto ydata     = m_dataset->getValues(1).data();
+        const int  dataCount = _dataset->getDataCount();
+        const auto ydata     = _dataset->getValues(1).data();
 
-        if (m_lineData.size() < 10000) {
-            m_lineData.resize(10000);
+        if (_lineData.size() < 10000) {
+            _lineData.resize(10000);
         }
 
         for (int i = 0; i < 10000; ++i) {
-            m_lineData[i] = ydata[i * 10];
+            _lineData[i] = ydata[i * 10];
         }
 
-        const auto xdata = m_dataset->getValues(0).data();
-        m_dataWidth      = xdata[dataCount - 1];
+        const auto xdata = _dataset->getValues(0).data();
+        _dataWidth       = xdata[dataCount - 1];
 
-        updateTexture(m_texture, QRect(0, m_lineOffset, 10000, 1), m_lineData.data());
-        if (++m_lineOffset == TexHeight) {
-            m_lineOffset = 0;
+        updateTexture(_texture, QRect(0, _lineOffset, 10000, 1), _lineData.data());
+        if (++_lineOffset == TexHeight) {
+            _lineOffset = 0;
         }
 
-        float startU = m_xaxis[0] / m_dataWidth;
-        float endU   = m_xaxis[1] / m_dataWidth;
+        float startU = _xaxis[0] / _dataWidth;
+        float endU   = _xaxis[1] / _dataWidth;
 
-        m_buffer.update([=](auto *data) {
+        _buffer.update([=](auto *data) {
             static const QVector2D vertices[] = {
                 { 0, 0 },
                 { 0, 1 },
@@ -73,14 +73,14 @@ public:
             data[3].uv_in = { endU, 1 };
         });
 
-        m_dataset = nullptr;
+        _dataset = nullptr;
     }
 
     void prepare() final {
-        if (!m_pipeline.isCreated()) {
+        if (!_pipeline.isCreated()) {
             init();
         }
-        if (m_dataset) {
+        if (_dataset) {
             updateData();
         }
     }
@@ -89,74 +89,74 @@ public:
         QMatrix4x4 m = matrix;
         m.scale(rect().width(), rect().height());
 
-        m_ubuf.update([&](WaterfallPipeline::Ubo *data) {
+        _ubuf.update([&](WaterfallPipeline::Ubo *data) {
             memcpy(data->qt_Matrix.data(), m.data(), 64);
-            data->gradient   = m_gradient;
-            data->lineOffset = m_lineOffset;
+            data->gradient   = _gradient;
+            data->lineOffset = _lineOffset;
         });
 
-        bindPipeline(m_pipeline);
-        bindBindingSet(m_bindingSet);
+        bindPipeline(_pipeline);
+        bindBindingSet(_bindingSet);
         draw(4);
     }
 
     void setGradient(float start, float stop) {
-        m_gradient = { start, stop };
+        _gradient = { start, stop };
     }
 
-    WaterfallPipeline                 m_pipeline;
-    Buffer<WaterfallPipeline::Vertex> m_buffer;
-    Buffer<WaterfallPipeline::Ubo>    m_ubuf;
-    Texture<TextureFormat::R32F>      m_texture;
-    BindingSet                        m_bindingSet;
+    WaterfallPipeline                 _pipeline;
+    Buffer<WaterfallPipeline::Vertex> _buffer;
+    Buffer<WaterfallPipeline::Ubo>    _ubuf;
+    Texture<TextureFormat::R32F>      _texture;
+    BindingSet                        _bindingSet;
 
-    DataSet                          *m_dataset    = nullptr;
-    QVector2D                         m_gradient   = { 0, 1 };
-    int                               m_lineOffset = 0;
-    float                             m_xaxis[2]   = { 0, 1 };
-    float                             m_dataWidth  = 1;
-    std::vector<float>                m_lineData;
+    DataSet                          *_dataset    = nullptr;
+    QVector2D                         _gradient   = { 0, 1 };
+    int                               _lineOffset = 0;
+    float                             _xaxis[2]   = { 0, 1 };
+    float                             _dataWidth  = 1;
+    std::vector<float>                _lineData;
 };
 
 WaterfallPlot::WaterfallPlot() {
-    m_renderer = new Renderer;
+    _renderer = new Renderer;
 }
 
 PlotRenderer *WaterfallPlot::renderer() {
-    return m_renderer;
+    return _renderer;
 }
 
 void WaterfallPlot::update(QQuickWindow *window, const QRect &chartRect, double devicePixelRatio, bool paused) {
     if (auto xa = xAxis()) {
-        m_renderer->m_xaxis[0] = xa->min();
-        m_renderer->m_xaxis[1] = xa->max();
+        _renderer->_xaxis[0] = xa->min();
+        _renderer->_xaxis[1] = xa->max();
     }
-    m_renderer->setGradient(m_gradientStart, m_gradientStop);
-    if (m_needsUpdate && !paused) {
-        m_needsUpdate         = false;
+    _renderer->setGradient(_gradientStart, _gradientStop);
+    if (needsUpdate() && !paused) {
+        resetNeedsUpdate();
 
-        m_renderer->m_dataset = dataSet();
+        _renderer->_dataset = dataSet();
     }
 }
 
 double WaterfallPlot::gradientStart() const {
-    return m_gradientStart;
+    return _gradientStart;
 }
 
 void WaterfallPlot::setGradientStart(double g) {
-    if (m_gradientStart != g) {
-        m_gradientStart = g;
+    if (_gradientStart != g) {
+        _gradientStart = g;
         emit gradientChanged();
     }
 }
 
 double WaterfallPlot::gradientStop() const {
-    return m_gradientStop;
+    return _gradientStop;
 }
 
 void WaterfallPlot::setGradientStop(double g) {
-    if (m_gradientStop != g) {
-        m_gradientStop = g;
+    if (_gradientStop != g) {
+        _gradientStop = g;
         emit gradientChanged();
     }
 }

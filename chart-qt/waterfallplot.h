@@ -32,10 +32,9 @@ private:
     class Renderer;
     class Node;
 
-    size_t    m_allocated     = 0;
-    double    m_gradientStart = 0;
-    double    m_gradientStop  = 0;
-    Renderer *m_renderer;
+    double    _gradientStart = 0;
+    double    _gradientStop  = 0;
+    Renderer *_renderer;
 };
 
 } // namespace chart_qt

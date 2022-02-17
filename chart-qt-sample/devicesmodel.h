@@ -30,7 +30,7 @@ private:
         QString name;
         QString address;
     };
-    std::vector<Device> m_devices;
+    std::vector<Device> _devices;
 };
 
 } // namespace ChartQtSample

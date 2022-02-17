@@ -56,19 +56,19 @@ private:
     QRectF              sanitizeZoomRect(QRectF rect);
     void                updateAxesRect();
 
-    std::vector<Plot *> m_plots;
-    std::vector<Plot *> m_plotsToInit;
-    std::vector<Plot *> m_plotsToUpdate;
-    bool                m_paused           = false;
-    double              m_verticalMargin   = 60;
-    double              m_horizontalMargin = 30;
+    std::vector<Plot *> _plots;
+    std::vector<Plot *> _plotsToInit;
+    std::vector<Plot *> _plotsToUpdate;
+    bool                _paused           = false;
+    double              _verticalMargin   = 60;
+    double              _horizontalMargin = 30;
 
     struct AxisLayout;
     class AxisNode;
-    std::vector<std::unique_ptr<AxisLayout>> m_axes;
-    std::vector<Axis *>                      m_addedAxes;
-    std::stack<QRectF>                       m_zoomHistory;
-    QMarginsF                                m_minimumMargins;
+    std::vector<std::unique_ptr<AxisLayout>> _axes;
+    std::vector<Axis *>                      _addedAxes;
+    std::stack<QRectF>                       _zoomHistory;
+    QMarginsF                                _minimumMargins;
 };
 
 } // namespace chart_qt

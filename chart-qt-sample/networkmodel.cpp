@@ -12,23 +12,23 @@ namespace ChartQtSample {
 NetworkModel::NetworkModel(QObject *parent)
     : QAbstractListModel{ parent } {
 #ifndef QT_NO_SSL
-    QObject::connect(&manager, &QNetworkAccessManager::sslErrors, &manager, [](QNetworkReply *reply, const QList<QSslError> &errors) {
+    QObject::connect(&_manager, &QNetworkAccessManager::sslErrors, &_manager, [](QNetworkReply *reply, const QList<QSslError> &errors) {
         reply->ignoreSslErrors();
     });
 #endif
 }
 
 QString NetworkModel::address() const {
-    return m_address;
+    return _address;
 }
 
 void NetworkModel::setAddress(const QString &address) {
-    if (m_address != address) {
-        m_address = address;
+    if (_address != address) {
+        _address = address;
         emit addressChanged();
 
         beginResetModel();
-        m_fields.clear();
+        _fields.clear();
         endResetModel();
 
         getFields();
@@ -39,11 +39,11 @@ int NetworkModel::rowCount(const QModelIndex &parent) const {
     if (parent.isValid()) {
         return 0;
     }
-    return m_fields.size();
+    return _fields.size();
 }
 
 QVariant NetworkModel::data(const QModelIndex &index, int role) const {
-    const auto &f = m_fields[index.row()];
+    const auto &f = _fields[index.row()];
     switch (Role(role)) {
     case Role::Name: return f.name;
     case Role::Value: return f.value;
@@ -58,32 +58,32 @@ QHash<int, QByteArray> NetworkModel::roleNames() const {
 }
 
 void NetworkModel::getValues() {
-    for (int i = 0; i < m_fields.size(); ++i) {
-        auto &f     = m_fields[i];
-        auto *reply = manager.get(QNetworkRequest(QUrl(m_address + f.name)));
+    for (int i = 0; i < _fields.size(); ++i) {
+        auto &f     = _fields[i];
+        auto *reply = _manager.get(QNetworkRequest(QUrl(_address + f.name)));
 
         QObject::connect(reply, &QNetworkReply::finished, this, [=, this] {
             auto replyContent = reply->readAll();
-            m_fields[i].value = QString(replyContent);
+            _fields[i].value  = QString(replyContent);
             emit dataChanged(index(i, 0), index(i, 0), { int(Role::Value) });
         });
     }
 }
 
 void NetworkModel::requestSetValue(int idx, const QString &value) {
-    const auto &f     = m_fields[idx];
-    auto       *reply = manager.post(QNetworkRequest(QUrl(m_address + f.name)), value.toUtf8().data());
+    const auto &f     = _fields[idx];
+    auto       *reply = _manager.post(QNetworkRequest(QUrl(_address + f.name)), value.toUtf8().data());
 
     QObject::connect(reply, &QNetworkReply::finished, this, [=, this] {
         if (reply->error() == QNetworkReply::NoError) {
-            m_fields[idx].value = value;
+            _fields[idx].value = value;
             dataChanged(index(idx, 0), index(idx, 0), { int(Role::Value) });
         }
     });
 }
 
 void NetworkModel::getFields() {
-    auto *reply = manager.post(QNetworkRequest(QUrl(m_address)),
+    auto *reply = _manager.post(QNetworkRequest(QUrl(_address)),
             "first.service;;a.topic;;;rbacToken;");
 
     QObject::connect(reply, &QNetworkReply::finished, this, [=, this] {
@@ -95,9 +95,9 @@ void NetworkModel::getFields() {
             const auto names = json.array();
 
             beginResetModel();
-            m_fields.clear();
+            _fields.clear();
             for (const auto &n : names) {
-                m_fields.push_back(Field{ n.toString(), {} });
+                _fields.push_back(Field{ n.toString(), {} });
             }
             endResetModel();
         }

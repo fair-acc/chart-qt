@@ -13,15 +13,15 @@ DefaultZoomHandler::DefaultZoomHandler(QObject *parent)
 }
 
 QQuickItem *DefaultZoomHandler::zoomRectangle() const {
-    return m_zoomRectangle;
+    return _zoomRectangle;
 }
 
 void DefaultZoomHandler::setZoomRectangle(QQuickItem *r) {
-    if (m_zoomRectangle != r) {
-        m_zoomRectangle = r;
+    if (_zoomRectangle != r) {
+        _zoomRectangle = r;
         emit zoomRectangleChanged();
 
-        m_zoomRectangle->setVisible(false);
+        _zoomRectangle->setVisible(false);
     }
 }
 
@@ -33,15 +33,15 @@ void DefaultZoomHandler::componentComplete() {
         c->installEventFilter(this);
     }
 
-    if (!m_zoomRectangle) {
+    if (!_zoomRectangle) {
         QQmlComponent           defaultZoomRectangle = QQmlComponent(qmlEngine(this));
         static const QByteArray qmlCode              = "import QtQuick 2.0\n Rectangle { color: \"#965ac8fa\" }";
         defaultZoomRectangle.setData(qmlCode, {});
 
-        m_zoomRectangle = static_cast<QQuickItem *>(defaultZoomRectangle.create());
-        m_zoomRectangle->setParentItem(chartItem());
-        m_zoomRectangle->setParent(parent());
-        m_zoomRectangle->setVisible(false);
+        _zoomRectangle = static_cast<QQuickItem *>(defaultZoomRectangle.create());
+        _zoomRectangle->setParentItem(chartItem());
+        _zoomRectangle->setParent(parent());
+        _zoomRectangle->setVisible(false);
     }
 }
 
@@ -119,12 +119,12 @@ void DefaultZoomHandler::mousePressEvent(QMouseEvent *evt) {
         break;
     }
     case Qt::LeftButton: {
-        m_pinchPoints[0] = evt->position();
-        m_zoomRectangle->setX(evt->position().x());
-        m_zoomRectangle->setY(evt->position().y());
-        m_zoomRectangle->setWidth(0);
-        m_zoomRectangle->setHeight(0);
-        m_zoomRectangle->setVisible(true);
+        _pinchPoints[0] = evt->position();
+        _zoomRectangle->setX(evt->position().x());
+        _zoomRectangle->setY(evt->position().y());
+        _zoomRectangle->setWidth(0);
+        _zoomRectangle->setHeight(0);
+        _zoomRectangle->setVisible(true);
         break;
     }
     default: {
@@ -135,33 +135,33 @@ void DefaultZoomHandler::mousePressEvent(QMouseEvent *evt) {
 }
 
 void DefaultZoomHandler::mouseMoveEvent(QMouseEvent *evt) {
-    if (!m_panningAxis.empty()) {
+    if (!_panningAxis.empty()) {
         pan(evt->position());
     }
-    if (m_zoomRectangle->isVisible()) {
-        m_pinchPoints[1] = evt->position();
+    if (_zoomRectangle->isVisible()) {
+        _pinchPoints[1] = evt->position();
 
-        int x            = std::min(m_pinchPoints[0].x(), m_pinchPoints[1].x());
-        int y            = std::min(m_pinchPoints[0].y(), m_pinchPoints[1].y());
-        int w            = std::abs(m_pinchPoints[0].x() - m_pinchPoints[1].x());
-        int h            = std::abs(m_pinchPoints[0].y() - m_pinchPoints[1].y());
+        int x           = std::min(_pinchPoints[0].x(), _pinchPoints[1].x());
+        int y           = std::min(_pinchPoints[0].y(), _pinchPoints[1].y());
+        int w           = std::abs(_pinchPoints[0].x() - _pinchPoints[1].x());
+        int h           = std::abs(_pinchPoints[0].y() - _pinchPoints[1].y());
 
-        m_zoomRectangle->setX(x);
-        m_zoomRectangle->setY(y);
-        m_zoomRectangle->setWidth(w);
-        m_zoomRectangle->setHeight(h);
+        _zoomRectangle->setX(x);
+        _zoomRectangle->setY(y);
+        _zoomRectangle->setWidth(w);
+        _zoomRectangle->setHeight(h);
     }
 }
 
 void DefaultZoomHandler::mouseReleaseEvent(QMouseEvent *evt) {
     switch (evt->button()) {
     case Qt::MiddleButton: {
-        m_panningAxis.clear();
+        _panningAxis.clear();
         break;
     }
     case Qt::LeftButton: {
-        chartItem()->zoomIn(QRectF(m_zoomRectangle->x(), m_zoomRectangle->y(), m_zoomRectangle->width(), m_zoomRectangle->height()));
-        m_zoomRectangle->setVisible(false);
+        chartItem()->zoomIn(QRectF(_zoomRectangle->x(), _zoomRectangle->y(), _zoomRectangle->width(), _zoomRectangle->height()));
+        _zoomRectangle->setVisible(false);
         break;
     }
     case Qt::RightButton: {
@@ -179,23 +179,23 @@ void DefaultZoomHandler::touchEvent(QTouchEvent *evt) {
         if (evt->isBeginEvent()) {
             startPanning(evt->point(0).position());
         } else if (evt->isEndEvent()) {
-            m_panningAxis.clear();
+            _panningAxis.clear();
         } else {
             pan(evt->point(0).position());
         }
     } else {
-        m_panningAxis.clear();
+        _panningAxis.clear();
         if (evt->points().size() == 2) {
             const auto &p0 = evt->point(0).position();
             const auto &p1 = evt->point(1).position();
             if (evt->isBeginEvent()) {
-                m_pinchPoints[0] = p0;
-                m_pinchPoints[1] = p1;
+                _pinchPoints[0] = p0;
+                _pinchPoints[1] = p1;
             } else if (evt->isUpdateEvent()) {
                 auto    center = (p0 + p1) / 2.;
 
-                QPointF m      = { std::fabs(p0.x() - p1.x()) / std::fabs(m_pinchPoints[0].x() - m_pinchPoints[1].x()),
-                    std::fabs(p0.y() - p1.y()) / std::fabs(m_pinchPoints[0].y() - m_pinchPoints[1].y()) };
+                QPointF m      = { std::fabs(p0.x() - p1.x()) / std::fabs(_pinchPoints[0].x() - _pinchPoints[1].x()),
+                    std::fabs(p0.y() - p1.y()) / std::fabs(_pinchPoints[0].y() - _pinchPoints[1].y()) };
 
                 auto    c      = chartItem();
                 auto    crect  = c->contentRect();
@@ -218,8 +218,8 @@ void DefaultZoomHandler::touchEvent(QTouchEvent *evt) {
                     a->zoom(f, a->min() + anchor);
                 }
 
-                m_pinchPoints[0] = p0;
-                m_pinchPoints[1] = p1;
+                _pinchPoints[0] = p0;
+                _pinchPoints[1] = p1;
             }
         }
     }
@@ -229,24 +229,24 @@ void DefaultZoomHandler::startPanning(const QPointF &pos) {
     auto c = chartItem();
     if (c->contentRect().contains(pos)) {
         for (auto a : c->axes()) {
-            m_panningAxis.push_back(a);
+            _panningAxis.push_back(a);
         }
     } else
         for (auto a : c->axes()) {
             if (c->axisRect(a).contains(pos)) {
-                m_panningAxis.push_back(a);
+                _panningAxis.push_back(a);
             }
         }
-    m_pressPos = pos;
+    _pressPos = pos;
 }
 
 void DefaultZoomHandler::pan(const QPointF &pos) {
     auto       c    = chartItem();
-    auto       dpos = pos - m_pressPos;
+    auto       dpos = pos - _pressPos;
     const auto dx   = dpos.x() / c->contentRect().width();
     const auto dy   = dpos.y() / c->contentRect().height();
 
-    for (auto *a : m_panningAxis) {
+    for (auto *a : _panningAxis) {
         const auto range = a->max() - a->min();
         const auto p     = a->position();
         double     d     = range * (p == Axis::Position::Top || p == Axis::Position::Bottom ? dx : dy);
@@ -258,7 +258,7 @@ void DefaultZoomHandler::pan(const QPointF &pos) {
         a->setMin(a->min() - d);
         a->setMax(a->max() - d);
     }
-    m_pressPos = pos;
+    _pressPos = pos;
 }
 
 } // namespace chart_qt

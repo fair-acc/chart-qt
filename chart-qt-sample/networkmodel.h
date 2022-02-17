@@ -36,13 +36,13 @@ Q_SIGNALS:
 private:
     void                  getFields();
 
-    QString               m_address;
-    QNetworkAccessManager manager;
+    QString               _address;
+    QNetworkAccessManager _manager;
     struct Field {
         QString  name;
         QVariant value;
     };
-    std::vector<Field> m_fields;
+    std::vector<Field> _fields;
 };
 
 } // namespace ChartQtSample

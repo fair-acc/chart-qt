@@ -20,8 +20,7 @@ public:
 
 private:
     class XYRenderer;
-    size_t      m_allocated = 0;
-    XYRenderer *m_renderer  = nullptr;
+    XYRenderer *_renderer = nullptr;
 };
 
 } // namespace chart_qt

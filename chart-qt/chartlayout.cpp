@@ -16,7 +16,7 @@ ChartLayout::~ChartLayout() noexcept {
 QQmlListProperty<ChartItem> ChartLayout::charts() {
     QQmlListProperty<ChartItem>::AppendFunction append = [](QQmlListProperty<ChartItem> *list, ChartItem *chart) {
         auto layout = static_cast<ChartLayout *>(list->object);
-        layout->m_charts.push_back(chart);
+        layout->_charts.push_back(chart);
         chart->setParentItem(layout);
         layout->polish();
 
@@ -24,26 +24,26 @@ QQmlListProperty<ChartItem> ChartLayout::charts() {
     };
     QQmlListProperty<ChartItem>::CountFunction count = [](QQmlListProperty<ChartItem> *list) -> qsizetype {
         auto layout = static_cast<ChartLayout *>(list->object);
-        return layout->m_charts.size();
+        return layout->_charts.size();
     };
     QQmlListProperty<ChartItem>::AtFunction at = [](QQmlListProperty<ChartItem> *list, qsizetype i) -> ChartItem * {
         auto layout = static_cast<ChartLayout *>(list->object);
-        return layout->m_charts[i];
+        return layout->_charts[i];
     };
     QQmlListProperty<ChartItem>::ClearFunction clear = [](QQmlListProperty<ChartItem> *list) {
         auto layout = static_cast<ChartLayout *>(list->object);
-        layout->m_charts.clear();
+        layout->_charts.clear();
     };
     return QQmlListProperty(this, this, append, count, at, clear);
 }
 
 Qt::Orientation ChartLayout::orientation() const {
-    return m_orientation;
+    return _orientation;
 }
 
 void ChartLayout::setOrientation(Qt::Orientation o) {
-    if (m_orientation != o) {
-        m_orientation = o;
+    if (_orientation != o) {
+        _orientation = o;
         emit orientationChanged();
 
         polish();
@@ -56,18 +56,18 @@ void ChartLayout::geometryChange(const QRectF &newGeometry, const QRectF &oldGeo
 }
 
 void ChartLayout::updatePolish() {
-    if (m_charts.size() == 0) {
+    if (_charts.size() == 0) {
         return;
     }
 
     QMarginsF margins;
-    if (m_orientation == Qt::Horizontal) {
+    if (_orientation == Qt::Horizontal) {
         int x      = 0;
-        int w      = width() / m_charts.size();
+        int w      = width() / _charts.size();
 
         int top    = 0;
         int bottom = height();
-        for (auto c : m_charts) {
+        for (auto c : _charts) {
             c->setX(x);
             c->setY(0);
             c->setWidth(w);
@@ -83,11 +83,11 @@ void ChartLayout::updatePolish() {
         margins = QMarginsF(0, top, 0, height() - bottom);
     } else {
         int y     = 0;
-        int h     = height() / m_charts.size();
+        int h     = height() / _charts.size();
 
         int left  = 0;
         int right = width();
-        for (auto c : m_charts) {
+        for (auto c : _charts) {
             c->setX(0);
             c->setY(y);
             c->setWidth(width());
@@ -102,7 +102,7 @@ void ChartLayout::updatePolish() {
 
         margins = QMarginsF(left, 0, width() - right, 0);
     }
-    for (auto c : m_charts) {
+    for (auto c : _charts) {
         c->setMinimumContentMargins(margins);
     }
 }

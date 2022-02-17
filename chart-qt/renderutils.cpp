@@ -37,7 +37,7 @@ struct PlotRenderer::Private {
     class Node : public QSGRenderNode {
     public:
         Node(PlotRenderer *rend)
-            : m_renderer(rend) {
+            : _renderer(rend) {
         }
 
         QSGRenderNode::RenderingFlags flags() const override {
@@ -50,25 +50,25 @@ struct PlotRenderer::Private {
         void prepare() final {
             // matrix() returns a dangling pointer in render(), so copy it here for later.
             // See https://bugreports.qt.io/browse/QTBUG-97589
-            m_matrix = *matrix();
+            _matrix = *matrix();
 
-            m_renderer->d->prepare();
-            m_renderer->d->updateBatch = m_renderer->d->rhi()->nextResourceUpdateBatch();
-            m_renderer->prepare();
+            _renderer->d->prepare();
+            _renderer->d->updateBatch = _renderer->d->rhi()->nextResourceUpdateBatch();
+            _renderer->prepare();
 
-            m_renderer->d->cmdbuf->resourceUpdate(m_renderer->d->updateBatch);
+            _renderer->d->cmdbuf->resourceUpdate(_renderer->d->updateBatch);
         }
 
         void render(const QSGRenderNode::RenderState *state) final {
-            QMatrix4x4 m = (*state->projectionMatrix()) * m_matrix;
+            QMatrix4x4 m = (*state->projectionMatrix()) * _matrix;
 
-            m_renderer->render(m);
+            _renderer->render(m);
 
-            m_renderer->d->cmdbuf = nullptr;
+            _renderer->d->cmdbuf = nullptr;
         }
 
-        PlotRenderer *m_renderer;
-        QMatrix4x4    m_matrix;
+        PlotRenderer *_renderer;
+        QMatrix4x4    _matrix;
     };
 
     QRhi *rhi() {

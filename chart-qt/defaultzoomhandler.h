@@ -47,11 +47,11 @@ private:
     void                startPanning(const QPointF &pos);
     void                pan(const QPointF &pos);
 
-    QPointF             m_pressPos;
-    bool                m_panning : 1 = false;
-    std::vector<Axis *> m_panningAxis;
-    QQuickItem         *m_zoomRectangle = nullptr;
-    QPointF             m_pinchPoints[2];
+    QPointF             _pressPos;
+    bool                _panning : 1 = false;
+    std::vector<Axis *> _panningAxis;
+    QQuickItem         *_zoomRectangle = nullptr;
+    QPointF             _pinchPoints[2];
 };
 
 } // namespace chart_qt

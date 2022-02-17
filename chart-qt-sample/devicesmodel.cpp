@@ -13,18 +13,18 @@ static constexpr auto url = "https://localhost:42042";
 
 DevicesModel::DevicesModel(QObject *parent)
     : QAbstractListModel(parent) {
-    m_devices.push_back(Device{ "Device 1", url });
+    _devices.push_back(Device{ "Device 1", url });
 }
 
 int DevicesModel::rowCount(const QModelIndex &parent) const {
     if (parent.isValid()) {
         return 0;
     }
-    return m_devices.size() + 1;
+    return _devices.size() + 1;
 }
 
 QVariant DevicesModel::data(const QModelIndex &index, int role) const {
-    if (index.row() == m_devices.size()) {
+    if (index.row() == _devices.size()) {
         switch (Role(role)) {
         case Role::Name: return tr("Click to create a new connection");
         case Role::Address: return {};
@@ -33,7 +33,7 @@ QVariant DevicesModel::data(const QModelIndex &index, int role) const {
         return {};
     }
 
-    const auto &d = m_devices[index.row()];
+    const auto &d = _devices[index.row()];
     switch (Role(role)) {
     case Role::Name: return d.name;
     case Role::Address: return d.address;
@@ -50,8 +50,8 @@ QHash<int, QByteArray> DevicesModel::roleNames() const {
 }
 
 void DevicesModel::addNewDevice(const QString &address) {
-    beginInsertRows({}, m_devices.size(), m_devices.size());
-    m_devices.push_back(Device{ tr("Device %1").arg(m_devices.size() + 1), address });
+    beginInsertRows({}, _devices.size(), _devices.size());
+    _devices.push_back(Device{ tr("Device %1").arg(_devices.size() + 1), address });
     endInsertRows();
 }
 

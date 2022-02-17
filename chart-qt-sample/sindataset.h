@@ -22,13 +22,13 @@ protected:
     void timerEvent(QTimerEvent *e) final;
 
 private:
-    double             m_offset = 0;
-    std::vector<float> m_xdata;
-    std::vector<float> m_ydata;
-    std::vector<float> m_xPosErrors;
-    std::vector<float> m_xNegErrors;
-    std::vector<float> m_yPosErrors;
-    std::vector<float> m_yNegErrors;
+    double             _offset = 0;
+    std::vector<float> _xdata;
+    std::vector<float> _ydata;
+    std::vector<float> _xPosErrors;
+    std::vector<float> _xNegErrors;
+    std::vector<float> _yPosErrors;
+    std::vector<float> _yNegErrors;
 };
 
 } // namespace ChartQtSample
