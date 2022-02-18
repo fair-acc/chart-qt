@@ -1,0 +1,11 @@
+{
+    "className": "WaterfallPipeline",
+    "vertex": "shaders/waterfall.vert",
+    "vertexInputs": [
+        {
+            "name": "vertex",
+            "locations": [ 0, 1 ]
+        }
+    ],
+    "fragment": "shaders/waterfall.frag"
+}

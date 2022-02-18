@@ -1,0 +1,11 @@
+{
+    "className": "ErrorBarsPipeline",
+    "vertex": "shaders/xyplot_errorbars.vert",
+    "vertexInputs": [
+        {
+            "name": "pos",
+            "locations": [ 0 ]
+        }
+    ],
+    "fragment": "shaders/xyplot_errorbars.frag"
+}

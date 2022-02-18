@@ -1,0 +1,15 @@
+{
+    "className": "XYPlotPipeline",
+    "vertex": "shaders/xyplot_float.vert",
+    "vertexInputs": [
+        {
+            "name": "vx",
+            "locations": [ 0 ]
+        },
+        {
+            "name": "vy",
+            "locations": [ 1 ]
+        }
+    ],
+    "fragment": "shaders/xyplot_float.frag"
+}
