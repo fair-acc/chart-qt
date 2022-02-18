@@ -1,5 +1,8 @@
 # ChartQt
 
+| :exclamation:  ChartQt is still in a very early phase of its development. There are still many rough edges, missing functionalities and bugs. |
+|-----------------------------------------------------------------------------------------------------------------------------------------------|
+
 ChartQt is a charting library written in C++ focusing on performance. It uses the Qt libraries but
 has a dedicated rendering system running on top of QtQuick which gives it great performance and
 a wide platform support, being able to use any of the 3D rendering APIs OpenGL, Vulkan, Direct3D and Metal.
