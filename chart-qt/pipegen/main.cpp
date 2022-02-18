@@ -365,10 +365,10 @@ int                main(int argc, char **argv) {
         out << "    bool isCreated() const;\n";
         out << "    void create(chart_qt::PlotRenderer *renderer);\n\n";
 
-        out << "    const chart_qt::Pipeline &pipeline() const { return m_pipeline; }\n";
+        out << "    const chart_qt::Pipeline &pipeline() const { return _pipeline; }\n";
 
         out << "\nprivate:\n";
-        out << "    chart_qt::Pipeline m_pipeline;\n";
+        out << "    chart_qt::Pipeline _pipeline;\n";
 
         out << "};\n\n";
         out << "#endif\n";
@@ -392,21 +392,21 @@ int                main(int argc, char **argv) {
             const QString cname = camelCase(name);
             out << "void " << className << "::set" << cname << "InputBuffer(const chart_qt::Buffer<" << cname << "> &buffer, int offset)\n";
             out << "{\n";
-            out << "    m_pipeline.setVertexInputBuffer(" << i << ", buffer, offset);\n";
+            out << "    _pipeline.setVertexInputBuffer(" << i << ", buffer, offset);\n";
             out << "}\n\n";
         }
 
         out << "bool " << className << "::isCreated() const\n";
-        out << "{\n    return m_pipeline.isCreated();\n}\n\n";
+        out << "{\n    return _pipeline.isCreated();\n}\n\n";
 
         out << "void " << className << "::setTopology(chart_qt::Pipeline::Topology topology)\n";
-        out << "{\n    m_pipeline.setTopology(topology);\n}\n\n";
+        out << "{\n    _pipeline.setTopology(topology);\n}\n\n";
 
         out << "void " << className << "::create(chart_qt::PlotRenderer *renderer)\n";
         out << "{\n";
         for (int i = 0; i < shaders.size(); ++i) {
             const auto &s = shaders[i];
-            out << "    m_pipeline.setShader(chart_qt::Pipeline::ShaderStage::";
+            out << "    _pipeline.setShader(chart_qt::Pipeline::ShaderStage::";
             switch (s.stage) {
             case Shader::Stage::Vertex:
                 out << "Vertex";
@@ -420,10 +420,10 @@ int                main(int argc, char **argv) {
         out << "\n";
 
         for (auto &u : uniforms) {
-            out << "    m_pipeline.addUniformBufferBinding(" << u.second.block.binding << ", " << shaderStages(u.second.stages) << ");\n";
+            out << "    _pipeline.addUniformBufferBinding(" << u.second.block.binding << ", " << shaderStages(u.second.stages) << ");\n";
         }
         for (auto &s : samplers) {
-            out << "    m_pipeline.addSampledTexture(" << s.second.var.binding << ", " << shaderStages(s.second.stages) << ");\n";
+            out << "    _pipeline.addSampledTexture(" << s.second.var.binding << ", " << shaderStages(s.second.stages) << ");\n";
         }
         out << "\n";
 
@@ -433,10 +433,10 @@ int                main(int argc, char **argv) {
             int         stride    = vertexInputs[i].stride;
             for (const auto &l : locations) {
                 int loc = l.toInt();
-                out << "    m_pipeline.addVertexInput(" << i << ", " << loc << ", chart_qt::Pipeline::VertexInputFormat::" << typeFormat(inputs[loc].type) << ", " << vertexInputOffsets[loc] << ", " << stride << ");\n";
+                out << "    _pipeline.addVertexInput(" << i << ", " << loc << ", chart_qt::Pipeline::VertexInputFormat::" << typeFormat(inputs[loc].type) << ", " << vertexInputOffsets[loc] << ", " << stride << ");\n";
             }
         }
-        out << "\n    m_pipeline.create(renderer);\n";
+        out << "\n    _pipeline.create(renderer);\n";
 
         out << "}\n\n";
 
