@@ -24,8 +24,8 @@ struct BufferBase::Private {
 };
 
 struct TextureBase::Private {
-    QRhiTexture *image;
-    QRhiSampler *sampler;
+    QRhiTexture *image = nullptr;
+    QRhiSampler *sampler = nullptr;
 };
 
 struct BindingSet::Private {
@@ -208,11 +208,10 @@ TextureBase PlotRenderer::createTextureBase(TextureFormat f, QSize size) {
 }
 
 void PlotRenderer::updateTextureBase(TextureBase &tex, const QRect &region, void *data, uint32_t size) {
-    QRhiTextureSubresourceUploadDescription subres(data, size);
-    subres.setDataStride(size);
+    // Use QByteArray::fromRawData() to avoid copying the data
+    QRhiTextureSubresourceUploadDescription subres(QByteArray::fromRawData(static_cast<char *>(data), size));
     subres.setDestinationTopLeft({ region.x(), region.y() });
-    subres.setSourceTopLeft({ 0, 0 });
-    subres.setSourceSize({ region.width() * region.height(), 1 });
+    subres.setSourceSize({ region.width(), region.height() });
 
     if (!d->updateBatch) {
         d->updateBatch = d->rhi()->nextResourceUpdateBatch();
@@ -259,6 +258,20 @@ TextureBase::TextureBase(TextureBase &&) = default;
 TextureBase::~TextureBase()              = default;
 
 TextureBase &TextureBase::operator=(chart_qt::TextureBase &&) = default;
+
+QSize TextureBase::pixelSize() const
+{
+    if (d->image) {
+        return d->image->pixelSize();
+    }
+    return {};
+}
+
+TextureBase::operator bool() const
+{
+    return d->image;
+}
+
 
 Pipeline::Pipeline()
     : d(std::make_unique<Private>()) {

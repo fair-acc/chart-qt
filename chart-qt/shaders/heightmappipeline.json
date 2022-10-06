@@ -1,0 +1,11 @@
+{
+    "className": "HeightmapPipeline",
+    "vertex": "shaders/heightmap.vert",
+    "vertexInputs": [
+        {
+            "name": "vertex",
+            "locations": [ 0, 1 ]
+        }
+    ],
+    "fragment": "shaders/heightmap.frag"
+}

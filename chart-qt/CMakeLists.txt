@@ -24,6 +24,7 @@ set(SOURCES chartitem.cpp
             plot.cpp
             xyplot.cpp
             waterfallplot.cpp
+            heightmapplot.cpp
             defaultzoomhandler.cpp
             chartlayout.cpp
             renderutils.cpp
@@ -47,9 +48,12 @@ add_pipelines(TARGET chart-qt
                       shaders/xyplot_errorbars.frag
                       shaders/waterfall.vert
                       shaders/waterfall.frag
+                      shaders/heightmap.vert
+                      shaders/heightmap.frag
               FILES shaders/xyplotpipeline.json
                     shaders/errorbarspipeline.json
-                    shaders/waterfallpipeline.json)
+                    shaders/waterfallpipeline.json
+                    shaders/heightmappipeline.json)
 
 
 qt6_add_qml_module(chart-qt

@@ -24,7 +24,7 @@ ApplicationWindow {
         }
     }
 
-    SinDataSet
+    SinDataSet2D
     {
         id: sinDataSet
     }
@@ -42,7 +42,7 @@ ApplicationWindow {
 
             DefaultZoomHandler {}
 
-            XYPlot {
+            HeightmapPlot {
                 id: xy
                 xAxis: bottomAxis
                 yAxis: leftAxis
@@ -112,26 +112,26 @@ ApplicationWindow {
                 }
             }
         }
-        ChartItem {
-            id: waterfall
+        //ChartItem {
+            //id: waterfall
 
-            Component.onCompleted: waterfall.addAxis(bottomAxis)
-                Axis {
-                position: Axis.Right
-                min: 0
-                max: 10
-            }
+            //Component.onCompleted: waterfall.addAxis(bottomAxis)
+                //Axis {
+                //position: Axis.Right
+                //min: 0
+                //max: 10
+            //}
 
-            WaterfallPlot {
-                id: wf
+            //WaterfallPlot {
+                //id: wf
 
-                gradientStart: 1 - (bottomHandle.y + bottomHandle.height / 2) / chart.height
-                gradientStop: 1 - (topHandle.y + topHandle.height / 2) / chart.height
+                //gradientStart: 1 - (bottomHandle.y + bottomHandle.height / 2) / chart.height
+                //gradientStop: 1 - (topHandle.y + topHandle.height / 2) / chart.height
 
-                xAxis: bottomAxis
-                dataSet: sinDataSet
-            }
-        }
+                //xAxis: bottomAxis
+                //dataSet: sinDataSet
+            //}
+        //}
     }
 
     GroupBox {

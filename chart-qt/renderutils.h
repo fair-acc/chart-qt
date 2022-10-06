@@ -109,6 +109,9 @@ public:
     TextureBase(const TextureBase &) = delete;
     TextureBase(TextureBase &&);
 
+    QSize pixelSize() const;
+
+    operator bool() const;
     TextureBase &operator=(const TextureBase &) = delete;
     TextureBase &operator                       =(TextureBase &&);
 
